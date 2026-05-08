@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { GitFork, ChevronDown, ChevronUp, ArrowRight, Search, X } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import { findShortestPath } from '../lib/pathFinder';
 import type { PathNode } from '../lib/pathFinder';
 
@@ -17,6 +18,7 @@ interface PathStep {
 
 export function PathFinderPanel() {
   const { currentOntology, setHighlights, clearHighlights } = useAppStore();
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [fromId, setFromId] = useState('');
   const [toId, setToId] = useState('');
@@ -87,7 +89,7 @@ export function PathFinderPanel() {
       >
         <span className="pathfinder-title">
           <GitFork size={14} />
-          Path Finder
+          {t('pathfinder.title')}
         </span>
         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
@@ -96,7 +98,7 @@ export function PathFinderPanel() {
         <div className="pathfinder-body">
           <div className="pathfinder-selects">
             <div className="pathfinder-select-group">
-              <label className="pathfinder-label">From</label>
+              <label className="pathfinder-label">{t('pathfinder.from')}</label>
               <select
                 className="pathfinder-select"
                 value={fromId}
@@ -112,7 +114,7 @@ export function PathFinderPanel() {
             <ArrowRight size={16} className="pathfinder-arrow-icon" />
 
             <div className="pathfinder-select-group">
-              <label className="pathfinder-label">To</label>
+              <label className="pathfinder-label">{t('pathfinder.to')}</label>
               <select
                 className="pathfinder-select"
                 value={toId}
@@ -133,12 +135,12 @@ export function PathFinderPanel() {
               disabled={!fromId || !toId || !!sameEntity}
             >
               <Search size={13} />
-              Find Path
+              {t('pathfinder.find')}
             </button>
             {searched && (
               <button className="pathfinder-btn-clear" onClick={handleClear}>
                 <X size={13} />
-                Clear
+                {t('pathfinder.clear')}
               </button>
             )}
           </div>
@@ -151,14 +153,14 @@ export function PathFinderPanel() {
 
           {noPath && (
             <div className="pathfinder-message pathfinder-message--warn">
-              No directed path found between these entities.
+              {t('pathfinder.no_path')}
             </div>
           )}
 
           {displaySteps.length > 0 && (
             <div className="pathfinder-result">
               <div className="pathfinder-result-label">
-                Shortest path — {displaySteps.length - 1} hop{displaySteps.length - 1 !== 1 ? 's' : ''}
+                {t('pathfinder.path_found')} — {displaySteps.length - 1} hop{displaySteps.length - 1 !== 1 ? 's' : ''}
               </div>
               <div className="pathfinder-chain">
                 {displaySteps.map((step, i) => (

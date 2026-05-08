@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, Cloud, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import {
   createOntology,
   updateOntologyDefinition,
@@ -18,6 +19,7 @@ type Step = 'credentials' | 'workspace' | 'pushing' | 'done' | 'error';
 
 export function FabricExportModal({ onClose }: FabricExportModalProps) {
   const { currentOntology } = useAppStore();
+  const { t } = useI18n();
 
   const [step, setStep] = useState<Step>('credentials');
   const [token, setToken] = useState('');
@@ -121,9 +123,9 @@ export function FabricExportModal({ onClose }: FabricExportModalProps) {
               <Cloud size={20} color="var(--ms-blue)" />
             </div>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 600 }}>Push to Microsoft Fabric</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600 }}>{t('fabric.title')}</h2>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                Create or update an ontology in your Fabric workspace
+                {t('fabric.subtitle')}
               </p>
             </div>
           </div>

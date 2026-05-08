@@ -2,12 +2,14 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 
 export function SearchFilter() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(true);
   const [showEntities, setShowEntities] = useState(true);
   const [showRelationships, setShowRelationships] = useState(true);
+  const { t } = useI18n();
   
   const { 
     currentOntology, 
@@ -87,7 +89,7 @@ export function SearchFilter() {
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Filter size={14} />
-          Search & Filter
+          {t('search.title')}
         </span>
         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </div>
@@ -116,7 +118,7 @@ export function SearchFilter() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search entities, properties..."
+                  placeholder={t('search.placeholder')}
                   style={{
                     width: '100%',
                     padding: '8px 30px 8px 32px',
@@ -162,7 +164,7 @@ export function SearchFilter() {
                   color: showEntities ? 'white' : 'var(--text-secondary)'
                 }}
               >
-                Entities ({currentOntology.entityTypes.length})
+                {t('search.entities', { count: currentOntology.entityTypes.length })}
               </button>
               <button
                 onClick={() => setShowRelationships(!showRelationships)}
@@ -176,7 +178,7 @@ export function SearchFilter() {
                   color: showRelationships ? 'white' : 'var(--text-secondary)'
                 }}
               >
-                Relationships ({currentOntology.relationships.length})
+                {t('search.relationships', { count: currentOntology.relationships.length })}
               </button>
             </div>
 
@@ -189,7 +191,7 @@ export function SearchFilter() {
                   color: 'var(--text-tertiary)',
                   fontSize: 11
                 }}>
-                  No results for "{searchQuery}"
+                  {t('search.no_results', { query: searchQuery })}
                 </div>
               )}
 

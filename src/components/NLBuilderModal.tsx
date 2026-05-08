@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Sparkles, Send, Loader2, Check, AlertCircle, Edit3, Mic, MicOff } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import type { Ontology } from '../data/ontology';
 
 // Web Speech API types
@@ -54,6 +55,7 @@ interface NLBuilderModalProps {
 type Step = 'input' | 'loading' | 'preview' | 'error';
 
 export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
+  const { t } = useI18n();
   const [description, setDescription] = useState('');
   const [step, setStep] = useState<Step>('input');
   const [generatedOntology, setGeneratedOntology] = useState<Ontology | null>(null);
@@ -270,7 +272,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sparkles size={20} style={{ color: 'var(--accent)' }} />
-            <h2>Describe Your Ontology</h2>
+            <h2>{t('nlbuilder.title')}</h2>
           </div>
           <button className="modal-close" onClick={handleClose}>
             <X size={20} />

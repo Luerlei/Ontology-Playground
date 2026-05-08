@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Upload, Download, FileJson, AlertCircle, CheckCircle, RotateCcw, Copy, FileText, Table, Share2, Cloud } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import { serializeToRDF } from '../lib/rdf/serializer';
 import { parseRDF, RDFParseError } from '../lib/rdf/parser';
 import type { Ontology, DataBinding } from '../data/ontology';
@@ -45,6 +46,7 @@ const sampleSchema = `{
 
 export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalProps) {
   const { currentOntology, dataBindings, loadOntology, resetToDefault, exportOntology } = useAppStore();
+  const { t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -254,9 +256,9 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 600 }}>Import / Export Ontology</h2>
+            <h2 style={{ fontSize: 24, fontWeight: 600 }}>{t('import.title')}</h2>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-              Load your own ontology or export the current one
+              {t('import.subtitle', { defaultText: 'Load your own ontology or export the current one' })}
             </p>
           </div>
           <button className="icon-btn" onClick={onClose}>
@@ -287,7 +289,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
             <RotateCcw size={14} />
-            Reset to Default
+            {t('import.reset_btn')}
           </button>
         </div>
 
@@ -304,7 +306,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
             color: 'var(--ms-green)'
           }}>
             <CheckCircle size={18} />
-            <span>Ontology loaded successfully!</span>
+            <span>{t('import.success')}</span>
           </div>
         )}
 
@@ -368,7 +370,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
             }}>
               <Upload size={24} color="var(--ms-blue)" />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Import Ontology</div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{t('import.import_btn')}</div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
               {LEGACY_FORMATS_ENABLED ? 'Drop JSON or RDF/OWL file here' : 'Drop RDF/OWL (.rdf, .owl, .iq) file here'}
             </div>

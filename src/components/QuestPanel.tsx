@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import { Trophy, Star, X, CheckCircle, Lightbulb, Target } from 'lucide-react';
 
 export function QuestPanel() {
@@ -13,13 +14,14 @@ export function QuestPanel() {
     startQuest,
     abandonQuest
   } = useAppStore();
+  const { t } = useI18n();
 
   return (
     <div className="quest-panel">
       <div className="panel-header">
         <h3 className="panel-title">
           <Target size={16} style={{ marginRight: 8 }} />
-          Quests
+          {t('quest.title')}
         </h3>
       </div>
 
@@ -71,7 +73,7 @@ export function QuestPanel() {
             <div className="quest-actions">
               <button className="btn btn-secondary" onClick={abandonQuest}>
                 <X size={16} />
-                Abandon
+                {t('quest.abandon')}
               </button>
             </div>
           </motion.div>
@@ -117,7 +119,7 @@ export function QuestPanel() {
         <div className="badges-panel">
           <div className="section-title">
             <Star size={14} />
-            Earned Badges ({earnedBadges.length})
+            {t('quest.earned_badges')} ({earnedBadges.length})
           </div>
           <div className="badges-grid">
             {earnedBadges.map((badge, index) => (
@@ -134,7 +136,7 @@ export function QuestPanel() {
             ))}
           </div>
           <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ms-yellow)', fontWeight: 600 }}>
-            Total: {totalPoints} points
+            {t('quest.total_points', { points: totalPoints })}
           </div>
         </div>
       )}

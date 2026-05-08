@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { X, Database, Table, BarChart3, Cloud } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 
 interface DataSourcesModalProps {
   onClose: () => void;
@@ -8,6 +9,7 @@ interface DataSourcesModalProps {
 
 export function DataSourcesModal({ onClose }: DataSourcesModalProps) {
   const { currentOntology, dataBindings } = useAppStore();
+  const { t } = useI18n();
   
   return (
     <motion.div
@@ -27,9 +29,9 @@ export function DataSourcesModal({ onClose }: DataSourcesModalProps) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 600 }}>Data Sources</h2>
+            <h2 style={{ fontSize: 24, fontWeight: 600 }}>{t('datasources.title')}</h2>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-              How the Cosmic Coffee ontology binds to OneLake
+              {t('datasources.subtitle')}
             </p>
           </div>
           <button className="icon-btn" onClick={onClose}>
@@ -59,9 +61,9 @@ export function DataSourcesModal({ onClose }: DataSourcesModalProps) {
             <Cloud size={28} color="white" />
           </div>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Microsoft OneLake</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>{t('datasources.onelake')}</div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Unified data lake for Microsoft Fabric. The ontology binds entity types to tables and semantic models stored here.
+              {t('datasources.onelake_desc')}
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { X, FileText, Copy, Check } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import { useState } from 'react';
 
 interface OntologySummaryModalProps {
@@ -9,6 +10,7 @@ interface OntologySummaryModalProps {
 
 export function OntologySummaryModal({ onClose }: OntologySummaryModalProps) {
   const { currentOntology } = useAppStore();
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   const generateTextSummary = () => {
@@ -75,13 +77,13 @@ export function OntologySummaryModal({ onClose }: OntologySummaryModalProps) {
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FileText size={20} style={{ color: 'var(--accent)' }} />
-            <h2>Ontology Summary</h2>
+            <h2>{t('summary.title')}</h2>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
               className="icon-btn" 
               onClick={handleCopy} 
-              title="Copy to clipboard"
+              title={t('summary.copy')}
               style={{ background: copied ? 'var(--ms-green)' : 'var(--bg-tertiary)' }}
             >
               {copied ? <Check size={18} color="white" /> : <Copy size={18} />}
@@ -99,7 +101,7 @@ export function OntologySummaryModal({ onClose }: OntologySummaryModalProps) {
           </div>
 
           <div className="summary-section">
-            <h4>Entities ({currentOntology.entityTypes.length})</h4>
+            <h4>{t('summary.entities')} ({currentOntology.entityTypes.length})</h4>
             <div className="summary-entities">
               {currentOntology.entityTypes.map(entity => (
                 <div key={entity.id} className="summary-entity-card">
@@ -127,7 +129,7 @@ export function OntologySummaryModal({ onClose }: OntologySummaryModalProps) {
           </div>
 
           <div className="summary-section">
-            <h4>Relationships ({currentOntology.relationships.length})</h4>
+            <h4>{t('summary.relationships')} ({currentOntology.relationships.length})</h4>
             <div className="summary-relationships">
               {currentOntology.relationships.map(rel => {
                 const fromEntity = currentOntology.entityTypes.find(e => e.id === rel.from);

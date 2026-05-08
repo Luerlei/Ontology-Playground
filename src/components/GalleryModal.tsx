@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Layers, ArrowRight, Search, Code, User, Pencil, Share2 } from 'lucide-react';
 import { useDesignerStore } from '../store/designerStore';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import { serializeToRDF } from '../lib/rdf/serializer';
 import { highlightRdf, RDF_HIGHLIGHT_DARK, RDF_HIGHLIGHT_LIGHT } from '../lib/rdf/highlighter';
 import { navigate, parseHash } from '../lib/router';
@@ -17,6 +18,7 @@ type SourceFilter = 'all' | 'official' | 'community' | 'external';
 
 export function GalleryModal({ onClose }: GalleryModalProps) {
   const { currentOntology, loadOntology } = useAppStore();
+  const { t } = useI18n();
 
   const [catalogue, setCatalogue] = useState<CatalogueEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,9 +146,9 @@ export function GalleryModal({ onClose }: GalleryModalProps) {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div>
-            <h2 style={{ fontSize: 24, fontWeight: 600 }}>Ontology Gallery</h2>
+            <h2 style={{ fontSize: 24, fontWeight: 600 }}>{t('gallery.title')}</h2>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>
-              Browse and load ontologies from the catalogue
+              {t('gallery.subtitle')}
             </p>
           </div>
           <button className="icon-btn" onClick={onClose}>

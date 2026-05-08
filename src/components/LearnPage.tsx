@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ArrowLeft, BookOpen, ChevronRight, Sun, Moon, FlaskConical, GraduationCap, Play, X } from 'lucide-react';
 import { AppFooter } from './AppFooter';
 import { useAppStore } from '../store/appStore';
+import { useI18n } from '../i18n';
 import { navigate } from '../lib/router';
 import type { Route } from '../lib/router';
 import type { LearnManifest, LearnCourse, LearnArticle } from '../types/learn';
@@ -14,6 +15,7 @@ interface LearnPageProps {
 
 export function LearnPage({ route }: LearnPageProps) {
   const { darkMode, toggleDarkMode } = useAppStore();
+  const { t } = useI18n();
   const [manifest, setManifest] = useState<LearnManifest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
@@ -64,10 +66,10 @@ export function LearnPage({ route }: LearnPageProps) {
     backLabel = course.title;
     backAction = () => navigate({ page: 'learn', courseSlug: course.slug });
   } else if (course) {
-    backLabel = 'All courses';
+    backLabel = t('learn.all_courses');
     backAction = () => navigate({ page: 'learn' });
   } else {
-    backLabel = 'Playground';
+    backLabel = t('learn.back_playground');
     backAction = () => navigate({ page: 'home' });
   }
 
@@ -84,7 +86,7 @@ export function LearnPage({ route }: LearnPageProps) {
         </button>
         <button className="learn-header-title" onClick={() => navigate({ page: 'learn' })}>
           <BookOpen size={20} />
-          <span>Ontology School</span>
+          <span>{t('learn.title')}</span>
         </button>
         <button className="icon-btn" onClick={toggleDarkMode} title="Toggle Theme">
           {darkMode ? <Sun size={20} /> : <Moon size={20} />}
