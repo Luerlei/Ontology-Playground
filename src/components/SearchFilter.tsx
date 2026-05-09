@@ -183,7 +183,7 @@ export function SearchFilter() {
             </div>
 
             {/* Results or Quick Access */}
-            <div style={{ maxHeight: 200, overflowY: 'auto' }} tabIndex={0} aria-label="Search results">
+            <div style={{ maxHeight: 200, overflowY: 'auto' }} tabIndex={0} aria-label={t('search.results_aria')}>
               {searchQuery && !hasResults && (
                 <div style={{ 
                   padding: 12, 
@@ -224,7 +224,7 @@ export function SearchFilter() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-primary)' }}>{entity.name}</div>
                     <div style={{ fontSize: 9, color: 'var(--text-secondary)' }}>
-                      {entity.properties.length} properties
+                      {t('search.properties', { count: entity.properties.length })}
                     </div>
                   </div>
                 </motion.div>

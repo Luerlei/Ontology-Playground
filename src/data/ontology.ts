@@ -4,6 +4,7 @@ export interface Property {
   name: string;
   type: 'string' | 'integer' | 'decimal' | 'double' | 'date' | 'datetime' | 'boolean' | 'enum';
   isIdentifier?: boolean;
+  isRequired?: boolean;
   unit?: string;
   values?: string[];
   description?: string;

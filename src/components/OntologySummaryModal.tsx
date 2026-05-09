@@ -119,7 +119,7 @@ export function OntologySummaryModal({ onClose }: OntologySummaryModalProps) {
                       <div key={prop.name} className="property-row">
                         <span className="prop-name">{prop.name}</span>
                         <span className="prop-type">{prop.type}</span>
-                        {prop.isIdentifier && <span className="prop-id-badge">ID</span>}
+                        {prop.isIdentifier && <span className="prop-id-badge">{t('summary.identifier_badge')}</span>}
                       </div>
                     ))}
                   </div>

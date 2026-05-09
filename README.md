@@ -158,6 +158,16 @@ npm run dev
 
 Visit http://localhost:5173
 
+### Development (Frontend + Local API)
+
+```bash
+npm run dev:full
+```
+
+This starts Vite, Azurite (local storage emulator), and the local Azure
+Functions API together. The API must have Azure Functions Core Tools installed
+(`func` command available).
+
 ### Production Build
 
 ```bash

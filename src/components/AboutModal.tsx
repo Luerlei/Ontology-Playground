@@ -26,7 +26,7 @@ export function AboutModal({ onClose }: AboutModalProps) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h2 style={{ fontSize: 24, fontWeight: 600 }}>{t('about.title')}</h2>
-          <button className="icon-btn" onClick={onClose} aria-label="Close about dialog">
+          <button className="icon-btn" onClick={onClose} aria-label={t('about.close_aria')}>
             <X size={20} />
           </button>
         </div>

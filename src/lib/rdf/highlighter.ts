@@ -16,6 +16,16 @@ interface HighlightTheme {
   text: string;      // default text color
 }
 
+interface JsonHighlightTheme {
+  key: string;
+  string: string;
+  number: string;
+  boolean: string;
+  nullValue: string;
+  punctuation: string;
+  text: string;
+}
+
 export const RDF_HIGHLIGHT_DARK: HighlightTheme = {
   tag: '#569CD6',       // blue — tags
   attr: '#9CDCFE',      // light blue — attributes
@@ -32,6 +42,26 @@ export const RDF_HIGHLIGHT_LIGHT: HighlightTheme = {
   comment: '#008000',   // green
   namespace: '#800080', // purple
   text: '#333333',      // dark gray
+};
+
+export const JSON_HIGHLIGHT_DARK: JsonHighlightTheme = {
+  key: '#9CDCFE',
+  string: '#CE9178',
+  number: '#B5CEA8',
+  boolean: '#569CD6',
+  nullValue: '#569CD6',
+  punctuation: '#D4D4D4',
+  text: '#D4D4D4',
+};
+
+export const JSON_HIGHLIGHT_LIGHT: JsonHighlightTheme = {
+  key: '#FF0000',
+  string: '#A31515',
+  number: '#098658',
+  boolean: '#0000FF',
+  nullValue: '#0000FF',
+  punctuation: '#333333',
+  text: '#333333',
 };
 
 /**
@@ -122,4 +152,47 @@ function highlightTag(tag: string, theme: HighlightTheme, baseKey: number): Reac
 
 function span(key: number, color: string, text: string): ReactNode {
   return createElement('span', { key, style: { color } }, text);
+}
+
+/**
+ * Lightweight JSON syntax highlighter.
+ */
+export function highlightJson(json: string, theme: JsonHighlightTheme): ReactNode {
+  const tokens: ReactNode[] = [];
+  let key = 0;
+  let index = 0;
+
+  const TOKEN = /"(?:[^"\\]|\\.)*"\s*:|"(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\btrue\b|\bfalse\b|\bnull\b|[{}\[\],:]/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = TOKEN.exec(json)) !== null) {
+    if (match.index > index) {
+      tokens.push(span(key++, theme.text, json.slice(index, match.index)));
+    }
+
+    const token = match[0];
+    if (token.endsWith(':') && token.startsWith('"')) {
+      const keyText = token.slice(0, -1);
+      tokens.push(span(key++, theme.key, keyText));
+      tokens.push(span(key++, theme.punctuation, ':'));
+    } else if (token.startsWith('"')) {
+      tokens.push(span(key++, theme.string, token));
+    } else if (token === 'true' || token === 'false') {
+      tokens.push(span(key++, theme.boolean, token));
+    } else if (token === 'null') {
+      tokens.push(span(key++, theme.nullValue, token));
+    } else if (/^-?\d/.test(token)) {
+      tokens.push(span(key++, theme.number, token));
+    } else {
+      tokens.push(span(key++, theme.punctuation, token));
+    }
+
+    index = match.index + token.length;
+  }
+
+  if (index < json.length) {
+    tokens.push(span(key++, theme.text, json.slice(index)));
+  }
+
+  return createElement(Fragment, null, ...tokens);
 }

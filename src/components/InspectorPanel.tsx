@@ -141,7 +141,7 @@ export function InspectorPanel() {
               }}>
                 <div>
                   <span className="property-name">{prop.name}</span>
-                  {prop.isIdentifier && <span className="property-identifier">ID</span>}
+                  {prop.isIdentifier && <span className="property-identifier">{t('inspector.identifier_badge')}</span>}
                   {prop.unit && <span className="property-type" style={{ marginLeft: 8 }}>({prop.unit})</span>}
                 </div>
                 <span className="property-type">{prop.type}</span>

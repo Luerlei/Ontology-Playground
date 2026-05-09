@@ -106,14 +106,14 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
         
         // Handle specific errors
         if (errorEvent.error === 'network') {
-          setVoiceError('Network error - try Chrome or Safari');
+          setVoiceError(t('nlbuilder.voice.network_error'));
           shouldKeepListeningRef.current = false;
           setIsRecording(false);
           return;
         }
         
         if (errorEvent.error === 'service-not-allowed' || errorEvent.error === 'not-allowed') {
-          setVoiceError('Microphone access denied');
+          setVoiceError(t('nlbuilder.voice.access_denied'));
           shouldKeepListeningRef.current = false;
           setIsRecording(false);
           return;
@@ -154,7 +154,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
         console.log('Recognition started');
       } catch (e) {
         console.error('Start failed:', e);
-        setVoiceError('Failed to start - try Chrome or Safari');
+        setVoiceError(t('nlbuilder.voice.start_failed'));
         shouldKeepListeningRef.current = false;
         setIsRecording(false);
       }
@@ -203,7 +203,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
       
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to generate ontology');
+        throw new Error(data.error || t('nlbuilder.error.generate_failed'));
       }
       
       const { ontology } = await response.json();
@@ -219,7 +219,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
       setEditedJson(JSON.stringify(ontology, null, 2));
       setStep('preview');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setError(err instanceof Error ? err.message : t('nlbuilder.error.unknown'));
       setStep('error');
     }
   };
@@ -232,7 +232,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
       loadOntology(ontologyToApply);
       handleClose();
     } catch {
-      setError('Invalid JSON in editor');
+      setError(t('nlbuilder.error.invalid_json'));
     }
   };
 
@@ -248,10 +248,10 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
   };
 
   const examplePrompts = [
-    "I run a hospital with doctors, patients, and departments. Patients visit doctors for appointments.",
-    "An e-commerce platform with products, customers, orders, and reviews. Customers can return items.",
-    "A university with students, professors, courses, and departments. Students enroll in courses.",
-    "A restaurant chain with locations, employees, menu items, and customer orders with reservations.",
+    t('nlbuilder.example.hospital'),
+    t('nlbuilder.example.ecommerce'),
+    t('nlbuilder.example.university'),
+    t('nlbuilder.example.restaurant'),
   ];
 
   return (
@@ -282,14 +282,13 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
             {step === 'input' && (
               <div className="nl-builder-content">
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                  Describe your business scenario in natural language or use voice input. 
-                  AI will extract entities, relationships, and properties to create an ontology.
+                  {t('nlbuilder.input_hint')}
                 </p>
                 
                 <div className="nl-input-wrapper">
                   <textarea
                     className="nl-input-textarea"
-                    placeholder="Describe your business scenario..."
+                    placeholder={t('nlbuilder.input_placeholder')}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={5}
@@ -298,7 +297,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
                     <button
                       className={`voice-btn ${isRecording ? 'recording' : ''}`}
                       onClick={toggleRecording}
-                      title={isRecording ? 'Stop recording' : 'Start voice input'}
+                      title={isRecording ? t('nlbuilder.voice.stop') : t('nlbuilder.voice.start')}
                       type="button"
                     >
                       {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
@@ -309,7 +308,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
                 {isRecording && (
                   <div className="recording-indicator">
                     <span className="recording-dot" />
-                    Listening... Speak your ontology description
+                    {t('nlbuilder.voice.listening')}
                   </div>
                 )}
                 
@@ -320,7 +319,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
                 )}
 
                 <div className="example-prompts">
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>Try an example:</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>{t('nlbuilder.try_example')}</span>
                   <div className="example-chips">
                     {examplePrompts.map((prompt, i) => (
                       <button
@@ -340,7 +339,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
                   disabled={!description.trim()}
                 >
                   <Sparkles size={16} />
-                  Generate Ontology
+                  {t('nlbuilder.generate')}
                   <Send size={16} />
                 </button>
               </div>
@@ -349,9 +348,9 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
             {step === 'loading' && (
               <div className="nl-builder-content nl-loading">
                 <Loader2 size={48} className="spin" style={{ color: 'var(--accent)' }} />
-                <p>Analyzing your description...</p>
+                <p>{t('nlbuilder.loading.analyzing')}</p>
                 <p style={{ color: 'var(--text-tertiary)', fontSize: '14px' }}>
-                  Extracting entities, relationships, and properties
+                  {t('nlbuilder.loading.extracting')}
                 </p>
               </div>
             )}
@@ -365,7 +364,7 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
                     onClick={() => setEditMode(!editMode)}
                   >
                     <Edit3 size={14} />
-                    {editMode ? 'Preview' : 'Edit JSON'}
+                    {editMode ? t('nlbuilder.preview') : t('nlbuilder.edit_json')}
                   </button>
                 </div>
 
@@ -379,20 +378,20 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
                 ) : (
                   <div className="preview-summary">
                     <div className="preview-section">
-                      <h4>Entities ({generatedOntology.entityTypes.length})</h4>
+                      <h4>{t('nlbuilder.entities_count', { count: generatedOntology.entityTypes.length })}</h4>
                       <div className="preview-items">
                         {generatedOntology.entityTypes.map((entity) => (
                           <div key={entity.id} className="preview-item entity">
                             <span className="entity-icon">{entity.icon}</span>
                             <span className="entity-name">{entity.name}</span>
-                            <span className="entity-props">{entity.properties.length} props</span>
+                            <span className="entity-props">{t('nlbuilder.props_count', { count: entity.properties.length })}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     <div className="preview-section">
-                      <h4>Relationships ({generatedOntology.relationships.length})</h4>
+                      <h4>{t('nlbuilder.relationships_count', { count: generatedOntology.relationships.length })}</h4>
                       <div className="preview-items">
                         {generatedOntology.relationships.map((rel) => (
                           <div key={rel.id} className="preview-item relationship">
@@ -415,11 +414,11 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
 
                 <div className="preview-actions">
                   <button className="btn-secondary" onClick={() => setStep('input')}>
-                    ← Back
+                    ← {t('nlbuilder.back')}
                   </button>
                   <button className="btn-primary" onClick={handleApply}>
                     <Check size={16} />
-                    Apply Ontology
+                    {t('nlbuilder.apply')}
                   </button>
                 </div>
               </div>
@@ -428,12 +427,12 @@ export function NLBuilderModal({ onClose }: NLBuilderModalProps) {
         {step === 'error' && (
           <div className="nl-builder-content nl-error">
             <AlertCircle size={48} style={{ color: '#FF6B6B' }} />
-            <p style={{ color: '#FF6B6B' }}>Generation Failed</p>
+            <p style={{ color: '#FF6B6B' }}>{t('nlbuilder.error.title')}</p>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-              {error || 'An unknown error occurred'}
+              {error || t('nlbuilder.error.unknown')}
             </p>
             <button className="btn-secondary" onClick={() => setStep('input')}>
-              Try Again
+              {t('nlbuilder.try_again')}
             </button>
           </div>
         )}

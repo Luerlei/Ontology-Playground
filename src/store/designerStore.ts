@@ -8,6 +8,24 @@
 import { create } from 'zustand';
 import type { Ontology, EntityType, Property, Relationship, RelationshipAttribute } from '../data/ontology';
 
+export interface DesignerMetadata {
+  icon: string;
+  category: string;
+  tags: string[];
+  author: string;
+  relationshipNameDictionary: string[];
+}
+
+function defaultDesignerMetadata(): DesignerMetadata {
+  return {
+    icon: '📦',
+    category: 'general',
+    tags: [],
+    author: '',
+    relationshipNameDictionary: ['relates_to', 'belongs_to', 'contains', 'references'],
+  };
+}
+
 // ─── Validation ──────────────────────────────────────────────────────────────
 
 export interface ValidationError {
@@ -16,11 +34,11 @@ export interface ValidationError {
   relationshipId?: string;
 }
 
-// ─── Fabric IQ naming rules ─────────────────────────────────────────────────
-// 1–26 chars, alphanumeric + hyphens + underscores, must start & end with
-// an alphanumeric character.
+// ─── Fabric IQ naming rules (with Unicode support) ──────────────────────────
+// 1–26 chars, Unicode letter/number/hyphen/underscore, must start & end with
+// a Unicode letter or number.
 
-const FABRIC_IQ_NAME_RE = /^[A-Za-z0-9]([A-Za-z0-9_-]{0,24}[A-Za-z0-9])?$/;
+const FABRIC_IQ_NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,24}[\p{L}\p{N}]?$/u;
 
 export function isValidFabricIQName(name: string): boolean {
   return FABRIC_IQ_NAME_RE.test(name);
@@ -29,8 +47,8 @@ export function isValidFabricIQName(name: string): boolean {
 export function fabricIQNameError(kind: string, name: string): string | null {
   if (!name) return null; // empty names are caught separately
   if (name.length > 26) return `${kind} name "${name}" exceeds 26 characters.`;
-  if (!/^[A-Za-z0-9]/.test(name)) return `${kind} name "${name}" must start with a letter or digit.`;
-  if (!/[A-Za-z0-9]$/.test(name)) return `${kind} name "${name}" must end with a letter or digit.`;
+  if (!/^\p{L}|\p{N}/u.test(name)) return `${kind} name "${name}" must start with a letter, digit, or CJK character.`;
+  if (!/[\p{L}\p{N}]$/u.test(name)) return `${kind} name "${name}" must end with a letter, digit, or CJK character.`;
   if (!FABRIC_IQ_NAME_RE.test(name)) return `${kind} name "${name}" may only contain letters, digits, hyphens, and underscores.`;
   return null;
 }
@@ -196,6 +214,7 @@ function historyPush(s: { _past: Ontology[]; ontology: Ontology }): { _past: Ont
 interface DesignerState {
   // Draft ontology
   ontology: Ontology;
+  metadata: DesignerMetadata;
   selectedEntityId: string | null;
   selectedRelationshipId: string | null;
   validationErrors: ValidationError[];
@@ -204,6 +223,7 @@ interface DesignerState {
   // Actions — ontology metadata
   setOntologyName: (name: string) => void;
   setOntologyDescription: (description: string) => void;
+  updateMetadata: (updates: Partial<DesignerMetadata>) => void;
 
   // Actions — entities
   addEntity: () => void;
@@ -227,7 +247,7 @@ interface DesignerState {
   removeRelationshipAttribute: (relId: string, index: number) => void;
 
   // Actions — bulk
-  loadDraft: (ontology: Ontology) => void;
+  loadDraft: (ontology: Ontology, metadata?: Partial<DesignerMetadata>) => void;
   resetDraft: () => void;
   validate: () => ValidationError[];
 
@@ -249,6 +269,7 @@ function emptyOntology(): Ontology {
 
 export const useDesignerStore = create<DesignerState>((set, get) => ({
   ontology: emptyOntology(),
+  metadata: defaultDesignerMetadata(),
   selectedEntityId: null,
   selectedRelationshipId: null,
   validationErrors: [],
@@ -262,6 +283,9 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   setOntologyDescription: (description) =>
     set((s) => ({ ...historyPush(s), ontology: { ...s.ontology, description } })),
+
+  updateMetadata: (updates) =>
+    set((s) => ({ metadata: { ...s.metadata, ...updates } })),
 
   // ─ Entities ─────────────────────────────────────────────────────────────
   addEntity: () => {
@@ -319,7 +343,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         ...s.ontology,
         entityTypes: s.ontology.entityTypes.map((e) =>
           e.id === entityId
-            ? { ...e, properties: [...e.properties, { name: '', type: 'string' as const }] }
+            ? { ...e, properties: [...e.properties, { name: '', type: 'string' as const, isRequired: false }] }
             : e,
         ),
       },
@@ -373,9 +397,10 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   // ─ Relationships ────────────────────────────────────────────────────────
   addRelationship: (from, to) => {
+    const defaultRelationshipName = get().metadata.relationshipNameDictionary[0] ?? 'relates_to';
     const rel: Relationship = {
       id: nextRelationshipId('relates-to'),
-      name: 'relates_to',
+      name: defaultRelationshipName,
       from,
       to,
       cardinality: 'one-to-many',
@@ -458,11 +483,27 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     })),
 
   // ─ Bulk ─────────────────────────────────────────────────────────────────
-  loadDraft: (ontology) =>
-    set({ ontology, _past: [], _future: [], selectedEntityId: null, selectedRelationshipId: null, validationErrors: [] }),
+  loadDraft: (ontology, metadata) =>
+    set({
+      ontology,
+      metadata: { ...defaultDesignerMetadata(), ...(metadata ?? {}) },
+      _past: [],
+      _future: [],
+      selectedEntityId: null,
+      selectedRelationshipId: null,
+      validationErrors: [],
+    }),
 
   resetDraft: () =>
-    set({ ontology: emptyOntology(), _past: [], _future: [], selectedEntityId: null, selectedRelationshipId: null, validationErrors: [] }),
+    set({
+      ontology: emptyOntology(),
+      metadata: defaultDesignerMetadata(),
+      _past: [],
+      _future: [],
+      selectedEntityId: null,
+      selectedRelationshipId: null,
+      validationErrors: [],
+    }),
 
   validate: () => {
     const errors = validateOntology(get().ontology);

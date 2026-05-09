@@ -47,6 +47,8 @@ interface AppState {
   loadOntology: (ontology: Ontology, bindings?: DataBinding[]) => void;
   resetToDefault: () => void;
   exportOntology: () => string;
+  upsertDataBinding: (binding: DataBinding) => void;
+  removeDataBinding: (entityTypeId: string) => void;
   
   // Actions
   selectEntity: (id: string | null) => void;
@@ -130,6 +132,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { currentOntology, dataBindings } = get();
     return JSON.stringify({ ontology: currentOntology, bindings: dataBindings }, null, 2);
   },
+
+  upsertDataBinding: (binding) =>
+    set((state) => {
+      const existingIndex = state.dataBindings.findIndex((b) => b.entityTypeId === binding.entityTypeId);
+      if (existingIndex === -1) {
+        return { dataBindings: [...state.dataBindings, binding] };
+      }
+      const nextBindings = [...state.dataBindings];
+      nextBindings[existingIndex] = binding;
+      return { dataBindings: nextBindings };
+    }),
+
+  removeDataBinding: (entityTypeId) =>
+    set((state) => ({
+      dataBindings: state.dataBindings.filter((b) => b.entityTypeId !== entityTypeId),
+    })),
   
   // UI Actions
   selectEntity: (id) => set({ 

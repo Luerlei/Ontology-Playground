@@ -132,6 +132,7 @@ interface ParsedDatatypeProperty {
   rangeUri: string | null;
   comment: string | null;
   isIdentifier: boolean;
+  isRequired: boolean;
   unit: string | null;
   enumValues: string | null;
   propertyType: string | null;
@@ -211,6 +212,7 @@ export function parseRDF(rdfXml: string): { ontology: Ontology; bindings: DataBi
       rangeUri: getChildResource(el, 'range'),
       comment: descriptionComment,
       isIdentifier: getChildText(el, 'isIdentifier') === 'true' || hasIdentifierComment,
+      isRequired: getChildText(el, 'isRequired') === 'true',
       unit: getChildText(el, 'unit'),
       enumValues: getChildText(el, 'enumValues'),
       propertyType: getChildText(el, 'propertyType'),
@@ -258,6 +260,7 @@ export function parseRDF(rdfXml: string): { ontology: Ontology; bindings: DataBi
     };
 
     if (dtProp.isIdentifier) prop.isIdentifier = true;
+    if (dtProp.isRequired) prop.isRequired = true;
     if (dtProp.unit) prop.unit = dtProp.unit;
     if (dtProp.enumValues) {
       prop.values = dtProp.enumValues.split(',');

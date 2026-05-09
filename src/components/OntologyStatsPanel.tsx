@@ -58,6 +58,15 @@ export function OntologyStatsPanel() {
             </div>
           </div>
 
+          <div className="stats-notes-block">
+            <div className="stats-notes-title">{t('notes.title')}</div>
+            {currentOntology.description ? (
+              <p className="stats-notes-text">{currentOntology.description}</p>
+            ) : (
+              <p className="stats-notes-empty">{t('notes.empty')}</p>
+            )}
+          </div>
+
 
         </div>
       )}

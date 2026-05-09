@@ -56,6 +56,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
 export function useI18n(): I18nContextValue {
   const ctx = useContext(I18nContext);
-  if (!ctx) throw new Error('useI18n must be used within I18nProvider');
-  return ctx;
+  if (ctx) return ctx;
+
+  // Fallback for test environments or components rendered outside I18nProvider
+  const fallbackT = (key: TranslationKey, vars?: Record<string, string | number>): string => {
+    const dict = translations.en as Record<string, string>;
+    let str = dict[key] ?? key;
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        str = str.replace(`{${k}}`, String(v));
+      }
+    }
+    return str;
+  };
+  return { lang: 'en', setLang: () => undefined, t: fallbackT };
 }

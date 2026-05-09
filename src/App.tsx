@@ -4,13 +4,13 @@ import {
   Header, 
   OntologyGraph, 
   QuestPanel, 
+  LeftSidebar,
   InspectorPanel, 
   QueryPlayground,
   SearchFilter,
   WelcomeModal,
   AboutModal,
   HelpModal,
-  DataSourcesModal,
   ImportExportModal,
   FabricExportModal,
   GalleryModal,
@@ -31,8 +31,9 @@ import { useDesignerStore } from './store/designerStore';
 import { useRoute } from './hooks/useRoute';
 import { navigate } from './lib/router';
 import { decodeSharePayload } from './lib/shareCodec';
-import type { Catalogue } from './types/catalogue';
-import { Search, MessageSquare, Info, Compass, LayoutGrid, PenTool, BookOpen, FileJson, HelpCircle, Database, Sun, Moon, FileText } from 'lucide-react';
+import { Search, MessageSquare, Info, Compass, LayoutGrid, PenTool, BookOpen, FileJson, HelpCircle, Sun, Moon, FileText } from 'lucide-react';
+import { useI18n } from './i18n';
+import { fetchCatalogueDynamic } from './lib/catalogueApi';
 import './styles/app.css';
 
 const AI_BUILDER_ENABLED = import.meta.env.VITE_ENABLE_AI_BUILDER === 'true';
@@ -48,7 +49,6 @@ function App() {
   const [showTour, setShowTour] = useState(() => !isTourDismissed());
   const [showAbout, setShowAbout] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [showDataSources, setShowDataSources] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
   const [showNLBuilder, setShowNLBuilder] = useState(false);
   const [showFabricExport, setShowFabricExport] = useState(false);
@@ -57,13 +57,14 @@ function App() {
   const [mobilePanel, setMobilePanel] = useState<'graph' | 'quests' | 'inspector' | 'query'>('graph');
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const { darkMode, earnedBadges, loadOntology, toggleDarkMode } = useAppStore();
+  const { t } = useI18n();
 
   // Show toast when a new badge is earned
   useEffect(() => {
     if (earnedBadges.length > 0) {
       const latestBadge = earnedBadges[earnedBadges.length - 1];
       setToast({
-        message: `Quest Complete! Earned: ${latestBadge.badge}`,
+        message: t('app.toast.quest_complete', { badge: latestBadge.badge }),
         icon: latestBadge.icon
       });
       
@@ -76,11 +77,7 @@ function App() {
   useEffect(() => {
     if (route.page === 'catalogue' && route.ontologyId) {
       const id = route.ontologyId;
-      fetch(`${import.meta.env.BASE_URL}catalogue.json`)
-        .then((res) => {
-          if (!res.ok) throw new Error(`Failed to load catalogue (${res.status})`);
-          return res.json() as Promise<Catalogue>;
-        })
+      fetchCatalogueDynamic()
         .then((data) => {
           const entry = data.entries.find((e) => e.id === id);
           if (entry) {
@@ -131,6 +128,12 @@ function App() {
     navigate({ page: 'designer' });
   }, []);
 
+  const openNewDesigner = useCallback(() => {
+    useDesignerStore.getState().resetDraft();
+    setShowWelcome(false);
+    navigate({ page: 'designer' });
+  }, []);
+
   const openLearn = useCallback(() => navigate({ page: 'learn' }), []);
 
   // ── Global keyboard shortcuts ──────────────────────────
@@ -162,16 +165,15 @@ function App() {
 
   // ── Command palette items ──────────────────────────────
   const commands = useMemo<CommandItem[]>(() => [
-    { id: 'catalogue', label: 'Open Catalogue', icon: <LayoutGrid size={18} />, action: openGallery },
-    { id: 'designer', label: 'Open Designer', icon: <PenTool size={18} />, action: openDesigner },
-    { id: 'learn', label: 'Open Ontology School', icon: <BookOpen size={18} />, action: openLearn },
-    { id: 'import-export', label: 'Import / Export', icon: <FileJson size={18} />, action: () => setShowImportExport(true) },
-    { id: 'summary', label: 'View Summary', icon: <FileText size={18} />, action: () => setShowSummary(true) },
-    { id: 'about', label: 'About & Trademark Notice', icon: <Info size={18} />, action: () => setShowAbout(true) },
-    { id: 'help', label: 'Help', icon: <HelpCircle size={18} />, shortcut: '?', action: () => setShowHelp(true) },
-    { id: 'data-sources', label: 'Data Sources', icon: <Database size={18} />, action: () => setShowDataSources(true) },
-    { id: 'theme', label: darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode', icon: darkMode ? <Sun size={18} /> : <Moon size={18} />, action: toggleDarkMode },
-  ], [darkMode, openGallery, openDesigner, openLearn, toggleDarkMode]);
+    { id: 'catalogue', label: t('app.command.open_catalogue'), icon: <LayoutGrid size={18} />, action: openGallery },
+    { id: 'designer', label: t('app.command.open_designer'), icon: <PenTool size={18} />, action: openDesigner },
+    { id: 'learn', label: t('app.command.open_school'), icon: <BookOpen size={18} />, action: openLearn },
+    { id: 'import-export', label: t('app.command.import_export'), icon: <FileJson size={18} />, action: () => setShowImportExport(true) },
+    { id: 'summary', label: t('app.command.view_summary'), icon: <FileText size={18} />, action: () => setShowSummary(true) },
+    { id: 'about', label: t('app.command.about_notice'), icon: <Info size={18} />, action: () => setShowAbout(true) },
+    { id: 'help', label: t('app.command.help'), icon: <HelpCircle size={18} />, shortcut: '?', action: () => setShowHelp(true) },
+    { id: 'theme', label: darkMode ? t('app.command.theme_light') : t('app.command.theme_dark'), icon: darkMode ? <Sun size={18} /> : <Moon size={18} />, action: toggleDarkMode },
+  ], [darkMode, openGallery, openDesigner, openLearn, toggleDarkMode, t]);
 
   // Full-page views
   if (route.page === 'designer') {
@@ -186,16 +188,34 @@ function App() {
       <Header 
         onAboutClick={() => setShowAbout(true)}
         onHelpClick={() => setShowHelp(true)} 
-        onDataSourcesClick={() => setShowDataSources(true)}
-        onImportExportClick={() => setShowImportExport(true)}
         onGalleryClick={openGallery}
-        onDesignerClick={openDesigner}
         onLearnClick={openLearn}
         onNLBuilderClick={AI_BUILDER_ENABLED ? () => setShowNLBuilder(true) : undefined}
         onSummaryClick={() => setShowSummary(true)}
       />
-      <QuestPanel />
-      <OntologyGraph />
+      <LeftSidebar onCreateModel={openNewDesigner} />
+      <OntologyGraph
+        topActions={(
+          <>
+            <button
+              className="graph-control-btn"
+              onClick={openDesigner}
+              title={t('graph.open_designer')}
+              aria-label={t('graph.open_designer')}
+            >
+              <PenTool size={16} />
+            </button>
+            <button
+              className="graph-control-btn"
+              onClick={() => setShowImportExport(true)}
+              title={t('graph.import_export')}
+              aria-label={t('graph.import_export')}
+            >
+              <FileJson size={16} />
+            </button>
+          </>
+        )}
+      />
       <div className="right-sidebar">
         <OntologyStatsPanel />
         <PathFinderPanel />
@@ -207,23 +227,23 @@ function App() {
       {/* Mobile bottom tabs — visible only on small screens via CSS */}
       <div className="mobile-panel-tabs">
         <button className={`mobile-tab ${mobilePanel === 'graph' ? 'active' : ''}`} onClick={() => setMobilePanel('graph')}>
-          <Search size={18} /> Graph
+          <Search size={18} /> {t('app.mobile.graph')}
         </button>
         <button className={`mobile-tab ${mobilePanel === 'quests' ? 'active' : ''}`} onClick={() => setMobilePanel('quests')}>
-          <Compass size={18} /> Quests
+          <Compass size={18} /> {t('app.mobile.quests')}
         </button>
         <button className={`mobile-tab ${mobilePanel === 'inspector' ? 'active' : ''}`} onClick={() => setMobilePanel('inspector')}>
-          <Info size={18} /> Inspector
+          <Info size={18} /> {t('app.mobile.inspector')}
         </button>
         <button className={`mobile-tab ${mobilePanel === 'query' ? 'active' : ''}`} onClick={() => setMobilePanel('query')}>
-          <MessageSquare size={18} /> Query
+          <MessageSquare size={18} /> {t('app.mobile.query')}
         </button>
       </div>
 
       {/* Mobile panel drawer — visible only on small screens when a panel is selected */}
       {mobilePanel !== 'graph' && (
         <div className="mobile-panel-drawer">
-          <button className="mobile-panel-close" onClick={() => setMobilePanel('graph')}>✕ Close</button>
+          <button className="mobile-panel-close" onClick={() => setMobilePanel('graph')}>✕ {t('app.mobile.close')}</button>
           {mobilePanel === 'quests' && <QuestPanel />}
           {mobilePanel === 'inspector' && (
             <>
@@ -249,10 +269,6 @@ function App() {
 
       <AnimatePresence>
         {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showDataSources && <DataSourcesModal onClose={() => setShowDataSources(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>

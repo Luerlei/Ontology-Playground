@@ -3,7 +3,11 @@ import { useAppStore } from '../store/appStore';
 import { useI18n } from '../i18n';
 import { Trophy, Star, X, CheckCircle, Lightbulb, Target } from 'lucide-react';
 
-export function QuestPanel() {
+interface QuestPanelProps {
+  hideHeader?: boolean;
+}
+
+export function QuestPanel({ hideHeader = false }: QuestPanelProps) {
   const {
     availableQuests,
     activeQuest,
@@ -18,12 +22,14 @@ export function QuestPanel() {
 
   return (
     <div className="quest-panel">
-      <div className="panel-header">
-        <h3 className="panel-title">
-          <Target size={16} style={{ marginRight: 8 }} />
-          {t('quest.title')}
-        </h3>
-      </div>
+      {!hideHeader && (
+        <div className="panel-header">
+          <h3 className="panel-title">
+            <Target size={16} style={{ marginRight: 8 }} />
+            {t('quest.title')}
+          </h3>
+        </div>
+      )}
 
       {/* Active Quest Display */}
       <AnimatePresence>

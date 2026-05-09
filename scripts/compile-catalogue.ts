@@ -13,6 +13,7 @@ import { parseRDF } from '../src/lib/rdf/parser.js';
 import { serializeToRDF } from '../src/lib/rdf/serializer.js';
 import { validateOntologyStyle } from './style-validator.js';
 import type { CatalogueEntry, Catalogue } from '../src/types/catalogue.js';
+import type { Ontology, DataBinding } from '../src/data/ontology.js';
 
 // Provide DOMParser for the RDF parser (browser API not available in Node)
 const dom = new JSDOM('');
@@ -96,32 +97,44 @@ function compile(): Catalogue {
   const seenIds = new Set<string>();
   let errors = 0;
 
-  for (const tier of ['official', 'community', 'external'] as const) {
-    const tierDir = join(CATALOGUE_DIR, tier);
-    // For community and external, ontologies are nested one level deeper:
-    // community/<user>/<slug>/  or  external/<source-name>/<slug>/
-    const ontologyDirs: { dir: string; source: typeof tier }[] = [];
+  const discovered: Array<{ dir: string; source: 'official' | 'community' | 'external'; relPath: string }> = [];
 
-    if (tier === 'official') {
-      for (const dir of discoverOntologyDirs(tierDir)) {
-        ontologyDirs.push({ dir, source: tier });
-      }
-    } else {
-      // community/<username>/<ontology-slug>/  or  external/<source>/<ontology-slug>/
-      for (const userDir of discoverOntologyDirs(tierDir)) {
-        for (const dir of discoverOntologyDirs(userDir)) {
-          ontologyDirs.push({ dir, source: tier });
-        }
-      }
+  for (const dir of discoverOntologyDirs(join(CATALOGUE_DIR, 'official'))) {
+    discovered.push({ dir, source: 'official', relPath: basename(dir) });
+  }
+
+  for (const userDir of discoverOntologyDirs(join(CATALOGUE_DIR, 'community'))) {
+    for (const dir of discoverOntologyDirs(userDir)) {
+      discovered.push({ dir, source: 'community', relPath: `${basename(userDir)}/${basename(dir)}` });
     }
+  }
 
-    for (const { dir, source } of ontologyDirs) {
+  for (const sourceDir of discoverOntologyDirs(join(CATALOGUE_DIR, 'external'))) {
+    for (const dir of discoverOntologyDirs(sourceDir)) {
+      discovered.push({ dir, source: 'external', relPath: `${basename(sourceDir)}/${basename(dir)}` });
+    }
+  }
+
+  // Backward-compatible community namespace support:
+  // catalogue/<namespace>/<slug>/...
+  const reservedRoots = new Set(['official', 'community', 'external']);
+  for (const namespaceDir of discoverOntologyDirs(CATALOGUE_DIR)) {
+    const namespace = basename(namespaceDir);
+    if (reservedRoots.has(namespace)) continue;
+    for (const dir of discoverOntologyDirs(namespaceDir)) {
+      discovered.push({ dir, source: 'community', relPath: `${namespace}/${basename(dir)}` });
+    }
+  }
+
+  for (const { dir, source, relPath } of discovered) {
       const slug = basename(dir);
       const metadataPath = join(dir, 'metadata.json');
-      const rdfFiles = readdirSync(dir).filter((f) => f.endsWith('.rdf') || f.endsWith('.owl'));
+      const rdfFiles = readdirSync(dir).filter((f: string) => f.endsWith('.rdf') || f.endsWith('.owl'));
+      // JSON ontology files: <slug>.json (not metadata.json)
+      const jsonFiles = readdirSync(dir).filter((f: string) => f.endsWith('.json') && f !== 'metadata.json');
 
-      if (rdfFiles.length === 0) {
-        console.error(`✘ ${dir}: no .rdf or .owl file found`);
+      if (rdfFiles.length === 0 && jsonFiles.length === 0) {
+        console.error(`✘ ${dir}: no .rdf, .owl or ontology .json file found`);
         errors++;
         continue;
       }
@@ -142,9 +155,7 @@ function compile(): Catalogue {
         continue;
       }
 
-      // Derive a stable ID from the filesystem path: <source>/<slug>
-      // For community ontologies the path is deeper: community/<user>/<slug>
-      const relPath = dir.slice(tierDir.length + 1).replace(/\\/g, '/'); // e.g. "cosmic-coffee" or "alice/my-ontology"
+      // Derive a stable ID from discovery path, e.g. official/<slug> or community/<user>/<slug>
       const entryId = `${source}/${relPath}`;
 
       if (seenIds.has(entryId)) {
@@ -153,29 +164,58 @@ function compile(): Catalogue {
         continue;
       }
 
-      // Parse RDF
-      const rdfPath = join(dir, rdfFiles[0]);
+      // Parse ontology — prefer JSON (editable source) when present, otherwise fall back to RDF
       let ontology: Ontology;
       let bindings: DataBinding[];
-      try {
-        const rdfXml = readFileSync(rdfPath, 'utf-8');
-        const parsed = parseRDF(rdfXml);
-        ontology = parsed.ontology;
-        bindings = parsed.bindings;
-      } catch (e) {
-        console.error(`✘ ${rdfPath}: ${(e as Error).message}`);
-        errors++;
-        continue;
-      }
+      let sourcePath = '';
+      if (jsonFiles.length > 0) {
+        // Parse JSON ontology file: { ontology, bindings? } or plain ontology object
+        const jsonPath = join(dir, jsonFiles[0]);
+        sourcePath = jsonPath;
+        try {
+          const raw = JSON.parse(readFileSync(jsonPath, 'utf-8'));
+          if (raw.ontology) {
+            ontology = raw.ontology as Ontology;
+            bindings = (raw.bindings ?? []) as DataBinding[];
+          } else if (raw.entityTypes) {
+            // Plain ontology object without wrapper
+            ontology = raw as Ontology;
+            bindings = [];
+          } else {
+            throw new Error('JSON file must contain an "ontology" object or a top-level ontology with "entityTypes"');
+          }
+          if (!ontology.entityTypes || !Array.isArray(ontology.entityTypes)) {
+            throw new Error('ontology.entityTypes must be an array');
+          }
+        } catch (e) {
+          console.error(`✘ ${jsonPath}: ${(e as Error).message}`);
+          errors++;
+          continue;
+        }
+      } else {
+        // Parse RDF
+        const rdfPath = join(dir, rdfFiles[0]);
+        sourcePath = rdfPath;
+        try {
+          const rdfXml = readFileSync(rdfPath, 'utf-8');
+          const parsed = parseRDF(rdfXml);
+          ontology = parsed.ontology;
+          bindings = parsed.bindings;
+        } catch (e) {
+          console.error(`✘ ${rdfPath}: ${(e as Error).message}`);
+          errors++;
+          continue;
+        }
 
-      // Round-trip check: serialize back and re-parse to verify fidelity
-      try {
-        const reserialized = serializeToRDF(ontology, bindings);
-        parseRDF(reserialized);
-      } catch (e) {
-        console.error(`✘ ${rdfPath}: round-trip verification failed — ${(e as Error).message}`);
-        errors++;
-        continue;
+        // Round-trip check: serialize back and re-parse to verify fidelity
+        try {
+          const reserialized = serializeToRDF(ontology, bindings);
+          parseRDF(reserialized);
+        } catch (e) {
+          console.error(`✘ ${rdfPath}: round-trip verification failed — ${(e as Error).message}`);
+          errors++;
+          continue;
+        }
       }
 
       // Style validation: check naming conventions and spelling
@@ -183,10 +223,10 @@ function compile(): Catalogue {
       if (styleErrors.length > 0) {
         for (const styleError of styleErrors) {
           if (styleError.severity === 'error') {
-            console.error(`✘ ${rdfPath}: ${styleError.message} (in "${styleError.label}")`);
+            console.error(`✘ ${sourcePath}: ${styleError.message} (in "${styleError.label}")`);
             errors++;
           } else {
-            console.warn(`⚠ ${rdfPath}: ${styleError.message} (in "${styleError.label}")`);
+            console.warn(`⚠ ${sourcePath}: ${styleError.message} (in "${styleError.label}")`);
           }
         }
         if (styleErrors.some(e => e.severity === 'error')) {
@@ -208,8 +248,7 @@ function compile(): Catalogue {
         bindings,
       });
 
-      console.log(`✔ ${source}/${slug}`);
-    }
+      console.log(`✔ ${entryId}`);
   }
 
   if (errors > 0) {

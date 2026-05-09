@@ -5,21 +5,18 @@ import { routeToHash } from '../lib/router';
 import { encodeSharePayload } from '../lib/shareCodec';
 import { serializeToRDF } from '../lib/rdf/serializer';
 import { useI18n } from '../i18n';
-import { Moon, Sun, Database, Trophy, HelpCircle, FileJson, LayoutGrid, Sparkles, FileText, Share2, PenTool, BookOpen, Menu, X, Download, Info, Languages } from 'lucide-react';
+import { Moon, Sun, Trophy, HelpCircle, LayoutGrid, Sparkles, FileText, Share2, BookOpen, Menu, X, Download, Info, Languages } from 'lucide-react';
 
 interface HeaderProps {
   onAboutClick: () => void;
   onHelpClick: () => void;
-  onDataSourcesClick: () => void;
-  onImportExportClick: () => void;
   onGalleryClick: () => void;
-  onDesignerClick: () => void;
   onLearnClick: () => void;
   onNLBuilderClick?: () => void;
   onSummaryClick: () => void;
 }
 
-export function Header({ onAboutClick, onHelpClick, onDataSourcesClick, onImportExportClick, onGalleryClick, onDesignerClick, onLearnClick, onNLBuilderClick, onSummaryClick }: HeaderProps) {
+export function Header({ onAboutClick, onHelpClick, onGalleryClick, onLearnClick, onNLBuilderClick, onSummaryClick }: HeaderProps) {
   const { darkMode, toggleDarkMode, totalPoints, earnedBadges, currentOntology, dataBindings } = useAppStore();
   const { t, lang, setLang } = useI18n();
   const route = useRoute();
@@ -138,23 +135,14 @@ export function Header({ onAboutClick, onHelpClick, onDataSourcesClick, onImport
         <button className="icon-btn" onClick={onGalleryClick} data-tooltip={t('header.catalogue')} aria-label={t('header.catalogue')}>
           <LayoutGrid size={20} />
         </button>
-        <button className="icon-btn" onClick={onDesignerClick} data-tooltip={t('header.designer')} aria-label={t('header.designer')}>
-          <PenTool size={20} />
-        </button>
         <button className="icon-btn" onClick={onLearnClick} data-tooltip={t('header.school')} aria-label={t('header.school')}>
           <BookOpen size={20} />
-        </button>
-        <button className="icon-btn" onClick={onImportExportClick} data-tooltip={t('header.importexport')} aria-label={t('header.importexport')}>
-          <FileJson size={20} />
         </button>
         <button className="icon-btn" onClick={onHelpClick} data-tooltip={t('header.help')} aria-label={t('header.help')}>
           <HelpCircle size={20} />
         </button>
         <button className="icon-btn" onClick={onAboutClick} data-tooltip={t('header.about')} aria-label={t('header.about')}>
           <Info size={20} />
-        </button>
-        <button className="icon-btn" onClick={onDataSourcesClick} data-tooltip={t('header.datasources')} aria-label={t('header.datasources')}>
-          <Database size={20} />
         </button>
         <button className="icon-btn" onClick={toggleDarkMode} data-tooltip={darkMode ? t('header.lightmode') : t('header.darkmode')} aria-label={darkMode ? t('header.lightmode') : t('header.darkmode')}>
           {darkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -199,23 +187,14 @@ export function Header({ onAboutClick, onHelpClick, onDataSourcesClick, onImport
             <button className="mobile-menu-item" onClick={menuAction(onGalleryClick)}>
               <LayoutGrid size={18} /> {t('header.catalogue')}
             </button>
-            <button className="mobile-menu-item" onClick={menuAction(onDesignerClick)}>
-              <PenTool size={18} /> {t('header.designer')}
-            </button>
             <button className="mobile-menu-item" onClick={menuAction(onLearnClick)}>
               <BookOpen size={18} /> {t('header.school')}
-            </button>
-            <button className="mobile-menu-item" onClick={menuAction(onImportExportClick)}>
-              <FileJson size={18} /> {t('header.importexport')}
             </button>
             <button className="mobile-menu-item" onClick={menuAction(onHelpClick)}>
               <HelpCircle size={18} /> {t('header.help')}
             </button>
             <button className="mobile-menu-item" onClick={menuAction(onAboutClick)}>
               <Info size={18} /> {t('header.about')}
-            </button>
-            <button className="mobile-menu-item" onClick={menuAction(onDataSourcesClick)}>
-              <Database size={18} /> {t('header.datasources')}
             </button>
             <button className="mobile-menu-item" onClick={menuAction(toggleDarkMode)}>
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}

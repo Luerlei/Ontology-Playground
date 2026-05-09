@@ -1,11 +1,38 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Key } from 'lucide-react';
+import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Key, Database, Asterisk } from 'lucide-react';
 import { useDesignerStore, ENTITY_COLORS, ENTITY_ICONS, fabricIQNameError } from '../../store/designerStore';
 import type { Property } from '../../data/ontology';
+import { useI18n } from '../../i18n';
+import { DataSourcesModal } from '../DataSourcesModal';
 
 const PROPERTY_TYPES: Property['type'][] = [
   'string', 'integer', 'decimal', 'double', 'date', 'datetime', 'boolean', 'enum',
 ];
+
+// Separate component so it can have its own local state (prevents trailing-comma stripping)
+function EnumValuesField({ values, onCommit, placeholder }: { values: string[]; onCommit: (v: string[]) => void; placeholder: string }) {
+  const [raw, setRaw] = useState(values.join(', '));
+
+  // Sync from outside only when the array reference actually changes (e.g. ZIP load)
+  useEffect(() => {
+    setRaw(values.join(', '));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.join(',')]);
+
+  return (
+    <input
+      type="text"
+      value={raw}
+      onChange={(e) => setRaw(e.target.value)}
+      onBlur={() => {
+        const parsed = raw.split(',').map((v) => v.trim()).filter(Boolean);
+        onCommit(parsed);
+        setRaw(parsed.join(', '));
+      }}
+      placeholder={placeholder}
+    />
+  );
+}
 
 export function EntityForm() {
   const {
@@ -21,30 +48,23 @@ export function EntityForm() {
     moveProperty,
   } = useDesignerStore();
 
-  const [expandedEntities, setExpandedEntities] = useState<Set<string>>(new Set());
+  const [expandedEntityId, setExpandedEntityId] = useState<string | null>(null);
+  const [bindingEntityId, setBindingEntityId] = useState<string | null>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const { t } = useI18n();
 
-  // When an entity is selected externally (e.g. graph click), expand and scroll to it
+  // When an entity is selected externally (e.g. graph click), expand it and scroll to it
   useEffect(() => {
-    if (selectedEntityId && !expandedEntities.has(selectedEntityId)) {
-      setExpandedEntities((prev) => new Set(prev).add(selectedEntityId));
-    }
     if (selectedEntityId) {
+      setExpandedEntityId(selectedEntityId);
       // Delay scroll slightly so the card expands first
       requestAnimationFrame(() => {
         cardRefs.current.get(selectedEntityId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
+    } else {
+      setExpandedEntityId(null);
     }
   }, [selectedEntityId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggleExpand = (id: string) => {
-    setExpandedEntities((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   const handleAddEntity = () => {
     addEntity();
@@ -52,25 +72,25 @@ export function EntityForm() {
     const latest = useDesignerStore.getState().ontology.entityTypes;
     if (latest.length > 0) {
       const newId = latest[0].id;
-      setExpandedEntities((prev) => new Set(prev).add(newId));
+      setExpandedEntityId(newId);
     }
   };
 
   return (
     <div className="designer-entity-list">
       <div className="designer-section-header">
-        <h3>Entity Types ({ontology.entityTypes.length})</h3>
-        <button className="designer-add-btn" onClick={handleAddEntity} title="Add entity type">
-          <Plus size={14} /> Add
+        <h3>{t('designer.entity.title', { count: ontology.entityTypes.length })}</h3>
+        <button className="designer-add-btn" onClick={handleAddEntity} title={t('designer.entity.add_title')}>
+          <Plus size={14} /> {t('designer.common.add')}
         </button>
       </div>
 
       {ontology.entityTypes.length === 0 && (
-        <div className="designer-empty">No entity types yet. Click "Add" to create one.</div>
+        <div className="designer-empty">{t('designer.entity.empty')}</div>
       )}
 
       {ontology.entityTypes.map((entity) => {
-        const isExpanded = expandedEntities.has(entity.id);
+        const isExpanded = expandedEntityId === entity.id;
         const isSelected = selectedEntityId === entity.id;
 
         return (
@@ -83,11 +103,10 @@ export function EntityForm() {
             <div
               className="designer-entity-header"
               onClick={() => {
-                selectEntity(entity.id);
-                toggleExpand(entity.id);
+                setExpandedEntityId(isExpanded ? null : entity.id);
               }}
             >
-              <button className="designer-expand-btn" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+              <button className="designer-expand-btn" aria-label={isExpanded ? t('designer.common.collapse') : t('designer.common.expand')}>
                 {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
               <span
@@ -96,12 +115,19 @@ export function EntityForm() {
               >
                 {entity.icon}
               </span>
-              <span className="designer-entity-name">{entity.name || 'Unnamed'}</span>
-              <span className="designer-entity-badge">{entity.properties.length} props</span>
+              <span className="designer-entity-name">{entity.name || t('designer.entity.unnamed')}</span>
+              <span className="designer-entity-badge">{t('designer.entity.props_badge', { count: entity.properties.length })}</span>
+              <button
+                className="designer-delete-btn"
+                onClick={(e) => { e.stopPropagation(); setBindingEntityId(entity.id); }}
+                title={t('designer.entity.bind_data')}
+              >
+                <Database size={14} />
+              </button>
               <button
                 className="designer-delete-btn"
                 onClick={(e) => { e.stopPropagation(); removeEntity(entity.id); }}
-                title="Delete entity"
+                title={t('designer.entity.delete')}
               >
                 <Trash2 size={14} />
               </button>
@@ -112,12 +138,12 @@ export function EntityForm() {
               <div className="designer-entity-body">
                 {/* Name */}
                 <label className="designer-field">
-                  <span>Name</span>
+                  <span>{t('designer.common.name')}</span>
                   <input
                     type="text"
                     value={entity.name}
                     onChange={(e) => updateEntity(entity.id, { name: e.target.value })}
-                    placeholder="Entity name"
+                    placeholder={t('designer.entity.name_placeholder')}
                   />
                   {entity.name && fabricIQNameError('Entity type', entity.name) && (
                     <span className="designer-field-hint error">{fabricIQNameError('Entity type', entity.name)}</span>
@@ -126,18 +152,18 @@ export function EntityForm() {
 
                 {/* Description */}
                 <label className="designer-field">
-                  <span>Description</span>
+                  <span>{t('designer.common.description')}</span>
                   <textarea
                     rows={2}
                     value={entity.description}
                     onChange={(e) => updateEntity(entity.id, { description: e.target.value })}
-                    placeholder="What does this entity represent?"
+                    placeholder={t('designer.entity.description_placeholder')}
                   />
                 </label>
 
                 {/* Icon picker */}
                 <div className="designer-field">
-                  <span>Icon</span>
+                  <span>{t('designer.entity.icon')}</span>
                   <div className="designer-icon-grid">
                     {ENTITY_ICONS.map((icon) => (
                       <button
@@ -153,7 +179,7 @@ export function EntityForm() {
 
                 {/* Color picker */}
                 <div className="designer-field">
-                  <span>Color</span>
+                  <span>{t('designer.entity.color')}</span>
                   <div className="designer-color-grid">
                     {ENTITY_COLORS.map((color) => (
                       <button
@@ -161,7 +187,7 @@ export function EntityForm() {
                         className={`designer-color-btn ${entity.color === color ? 'active' : ''}`}
                         style={{ backgroundColor: color }}
                         onClick={() => updateEntity(entity.id, { color })}
-                        aria-label={`Color ${color}`}
+                        aria-label={t('designer.entity.color_aria', { color })}
                       />
                     ))}
                   </div>
@@ -170,12 +196,12 @@ export function EntityForm() {
                 {/* Properties */}
                 <div className="designer-field">
                   <div className="designer-section-header">
-                    <span>Properties ({entity.properties.length})</span>
+                    <span>{t('designer.entity.properties_title', { count: entity.properties.length })}</span>
                     <button
                       className="designer-add-btn small"
                       onClick={() => addProperty(entity.id)}
                     >
-                      <Plus size={12} /> Add
+                      <Plus size={12} /> {t('designer.common.add')}
                     </button>
                   </div>
 
@@ -190,7 +216,7 @@ export function EntityForm() {
                       <div className="designer-property-row">
                         <span
                           className="designer-grip"
-                          title="Drag to reorder"
+                          title={t('designer.entity.drag_to_reorder')}
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData('text/plain', String(idx));
@@ -212,7 +238,7 @@ export function EntityForm() {
                           type="text"
                           value={prop.name}
                           onChange={(e) => updateProperty(entity.id, idx, { name: e.target.value })}
-                          placeholder="Property name"
+                          placeholder={t('designer.entity.property_name_placeholder')}
                         />
                         <select
                           className="designer-prop-type"
@@ -228,20 +254,37 @@ export function EntityForm() {
                         <button
                           className={`designer-id-btn ${prop.isIdentifier ? 'active' : ''} ${idTypeErr ? 'warning' : ''}`}
                           onClick={() => updateProperty(entity.id, idx, { isIdentifier: !prop.isIdentifier })}
-                          title={idTypeErr || (prop.isIdentifier ? 'Remove as identifier' : 'Mark as identifier')}
+                          title={idTypeErr || (prop.isIdentifier ? t('designer.entity.identifier_remove') : t('designer.entity.identifier_mark'))}
                         >
                           <Key size={12} />
                         </button>
                         <button
+                          className={`designer-required-btn ${prop.isRequired ? 'active' : ''}`}
+                          onClick={() => updateProperty(entity.id, idx, { isRequired: !prop.isRequired })}
+                          title={prop.isRequired ? t('designer.entity.required_unmark') : t('designer.entity.required_mark')}
+                        >
+                          <Asterisk size={12} />
+                        </button>
+                        <button
                           className="designer-delete-btn small"
                           onClick={() => removeProperty(entity.id, idx)}
-                          title="Remove property"
+                          title={t('designer.entity.property_remove')}
                         >
                           <Trash2 size={12} />
                         </button>
                       </div>
                       {(propNameErr || idTypeErr) && (
                         <span className="designer-field-hint error">{propNameErr || idTypeErr}</span>
+                      )}
+                      {prop.type === 'enum' && (
+                        <label className="designer-field designer-enum-values-field">
+                          <span>{t('designer.entity.enum_values')}</span>
+                          <EnumValuesField
+                            values={prop.values ?? []}
+                            onCommit={(values) => updateProperty(entity.id, idx, { values })}
+                            placeholder={t('designer.entity.enum_values_placeholder')}
+                          />
+                        </label>
                       )}
                       </div>
                       );
@@ -253,6 +296,14 @@ export function EntityForm() {
           </div>
         );
       })}
+
+      {bindingEntityId && (
+        <DataSourcesModal
+          initialEntityTypeId={bindingEntityId}
+          entityTypes={ontology.entityTypes}
+          onClose={() => setBindingEntityId(null)}
+        />
+      )}
     </div>
   );
 }

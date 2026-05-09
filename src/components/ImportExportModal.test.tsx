@@ -65,6 +65,10 @@ function createRdfFile(rdfContent: string, fileName = 'test-ontology.rdf'): File
   return new File([rdfContent], fileName, { type: 'application/rdf+xml' });
 }
 
+function createJsonFile(jsonContent: string, fileName = 'test-ontology.json'): File {
+  return new File([jsonContent], fileName, { type: 'application/json' });
+}
+
 describe('ImportExportModal integration', () => {
   const onClose = vi.fn();
 
@@ -98,7 +102,7 @@ describe('ImportExportModal integration', () => {
     expect(state.currentOntology.relationships[0].name).toBe('produces');
 
     // Success message should be shown
-    expect(screen.getByText('Ontology loaded successfully!')).toBeTruthy();
+    expect(screen.getByText('Import successful!')).toBeTruthy();
   });
 
   it('shows an error for malformed RDF', async () => {
@@ -180,6 +184,27 @@ describe('ImportExportModal integration', () => {
       const state = useAppStore.getState();
       expect(state.currentOntology.name).toBe('Test Widgets');
       expect(state.currentOntology.entityTypes).toHaveLength(2);
+    });
+  });
+
+  it('imports a valid JSON ontology file', async () => {
+    const jsonPayload = JSON.stringify({
+      ontology: testOntology,
+      bindings: [{ entityTypeId: 'widget', source: 'WidgetSource' }],
+    });
+    const file = createJsonFile(jsonPayload);
+
+    render(<ImportExportModal onClose={onClose} />);
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await userEvent.upload(fileInput, file);
+
+    await waitFor(() => {
+      const state = useAppStore.getState();
+      expect(state.currentOntology.name).toBe('Test Widgets');
+      expect(state.currentOntology.entityTypes).toHaveLength(2);
+      expect(state.dataBindings).toHaveLength(1);
+      expect(state.dataBindings[0].entityTypeId).toBe('widget');
     });
   });
 

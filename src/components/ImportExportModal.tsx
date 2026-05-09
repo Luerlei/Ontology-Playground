@@ -74,21 +74,18 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
           const result = parseRDF(content);
           ontology = result.ontology;
           bindings = result.bindings;
-        } else if (LEGACY_FORMATS_ENABLED && (fileName.endsWith('.json') || trimmed.startsWith('{'))) {
-          // Parse as JSON (legacy)
+        } else if (fileName.endsWith('.json') || trimmed.startsWith('{')) {
+          // Parse as JSON
           const parsed = JSON.parse(content);
 
           if (!parsed.ontology || !parsed.ontology.entityTypes || !parsed.ontology.relationships) {
-            throw new Error('Invalid ontology structure. Must have ontology.entityTypes and ontology.relationships.');
+            throw new Error(t('import.error.invalid_structure'));
           }
 
           ontology = parsed.ontology;
           bindings = parsed.bindings || [];
         } else {
-          const supported = LEGACY_FORMATS_ENABLED
-            ? 'an RDF/OWL (.rdf, .owl, .iq) or JSON (.json)'
-            : 'an RDF/OWL (.rdf, .owl, .iq)';
-          throw new Error(`Unsupported file format: "${file.name}". Please import ${supported} file.`);
+          throw new Error(t('import.error.unsupported_format', { fileName: file.name }));
         }
 
         // Fall back to filename (without extension) if no ontology name was parsed
@@ -105,9 +102,9 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
       } catch (err) {
         setImportStatus('error');
         if (err instanceof RDFParseError) {
-          setErrorMessage(`RDF parse error: ${err.message}`);
+          setErrorMessage(t('import.error.rdf_parse', { message: err.message }));
         } else {
-          setErrorMessage(err instanceof Error ? err.message : 'Failed to parse file');
+          setErrorMessage(err instanceof Error ? err.message : t('import.error.parse_failed'));
         }
       }
     };
@@ -277,10 +274,10 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
           alignItems: 'center'
         }}>
           <div>
-            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 4 }}>Currently Loaded</div>
+            <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 4 }}>{t('import.currently_loaded')}</div>
             <div style={{ fontSize: 16, fontWeight: 600 }}>{currentOntology.name}</div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              {currentOntology.entityTypes.length} entity types, {currentOntology.relationships.length} relationships
+              {t('import.stats', { entities: currentOntology.entityTypes.length, relationships: currentOntology.relationships.length })}
             </div>
           </div>
           <button 
@@ -354,7 +351,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
             <input 
               ref={fileInputRef}
               type="file" 
-              accept={LEGACY_FORMATS_ENABLED ? '.json,.rdf,.owl,.iq' : '.rdf,.owl,.iq'}
+              accept={'.json,.rdf,.owl,.iq'}
               onChange={handleFileSelect}
               style={{ display: 'none' }}
             />
@@ -372,7 +369,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{t('import.import_btn')}</div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-              {LEGACY_FORMATS_ENABLED ? 'Drop JSON or RDF/OWL file here' : 'Drop RDF/OWL (.rdf, .owl, .iq) file here'}
+              {t('import.drop_hint')}
             </div>
           </div>
 
@@ -397,11 +394,10 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
             }}>
               <Download size={24} color="var(--ms-green)" />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Export Current</div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>{t('import.export_current')}</div>
             
-            {/* Format Selector — only shown when legacy formats are enabled */}
-            {LEGACY_FORMATS_ENABLED && (
-              <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
+            {/* Format Selector */}
+            <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
                 <button
                   onClick={() => setExportFormat('json')}
                   style={{
@@ -420,6 +416,8 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
                   <FileJson size={12} />
                   JSON
                 </button>
+                {LEGACY_FORMATS_ENABLED && (
+                  <>
                 <button
                   onClick={() => setExportFormat('yaml')}
                   style={{
@@ -456,6 +454,8 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
                   <Table size={12} />
                   CSV
                 </button>
+                  </>
+                )}
                 <button
                   onClick={() => setExportFormat('rdf')}
                   style={{
@@ -470,20 +470,19 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
                     alignItems: 'center',
                     gap: 4
                   }}
-                  title="RDF/XML format for MS Fabric"
+                  title={t('import.rdf_fabric_title')}
                 >
                   <Share2 size={12} />
                   RDF
                 </button>
               </div>
-            )}
             
             <button 
               className="btn btn-primary"
               onClick={handleExport}
               style={{ width: '100%' }}
             >
-              {LEGACY_FORMATS_ENABLED ? `Download .${exportFormat}` : 'Download RDF/OWL'}
+              {(exportFormat === 'rdf' && !LEGACY_FORMATS_ENABLED) ? t('import.download_rdf') : t('import.download_format', { format: exportFormat })}
             </button>
 
             {onFabricPush && (
@@ -493,7 +492,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
                 style={{ width: '100%', marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
                 <Cloud size={14} />
-                Push to Microsoft Fabric
+                {t('import.push_fabric')}
               </button>
             )}
           </div>
@@ -511,7 +510,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <FileJson size={16} color="var(--text-tertiary)" />
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 600 }}>
-                  JSON Schema Reference
+                  {t('import.json_schema_ref')}
                 </span>
               </div>
               <button 
@@ -520,7 +519,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
                 onClick={handleCopySchema}
               >
                 <Copy size={12} style={{ marginRight: 4 }} />
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('import.copied') : t('import.copy')}
               </button>
             </div>
             <pre style={{ 
@@ -541,7 +540,7 @@ export function ImportExportModal({ onClose, onFabricPush }: ImportExportModalPr
 
         <div style={{ marginTop: 20, textAlign: 'center' }}>
           <button className="btn btn-primary" onClick={onClose}>
-            Done
+            {t('import.done')}
           </button>
         </div>
       </motion.div>

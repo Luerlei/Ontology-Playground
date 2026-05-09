@@ -39,6 +39,52 @@ interface ThemeTokens {
   nodeText: string; edgeColor: string; edgeText: string;
 }
 
+interface EmbedText {
+  loading: string;
+  unknownError: string;
+  noSource: string;
+  failedLoadCatalogue: (status: number) => string;
+  ontologyNotFoundInCatalogue: (id: string) => string;
+  failedFetchOntology: (status: number) => string;
+  stats: (entities: number, relationships: number) => string;
+  tabGraph: string;
+  tabRdfSource: string;
+  copied: string;
+  copyRdf: string;
+}
+
+function getEmbedText(): EmbedText {
+  const isZh = typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('zh');
+  if (isZh) {
+    return {
+      loading: '正在加载本体…',
+      unknownError: '未知错误',
+      noSource: '未指定本体来源。请使用 data-catalogue-id、data-ontology-url 或 data-ontology-inline。',
+      failedLoadCatalogue: (status) => `加载目录失败（${status}）`,
+      ontologyNotFoundInCatalogue: (id) => `目录中未找到本体“${id}”`,
+      failedFetchOntology: (status) => `获取本体失败（${status}）`,
+      stats: (entities, relationships) => `${entities} 个实体 · ${relationships} 个关系`,
+      tabGraph: '图谱',
+      tabRdfSource: 'RDF 源码',
+      copied: '已复制！',
+      copyRdf: '复制 RDF',
+    };
+  }
+  return {
+    loading: 'Loading ontology…',
+    unknownError: 'Unknown error',
+    noSource: 'No ontology source specified. Use data-catalogue-id, data-ontology-url, or data-ontology-inline.',
+    failedLoadCatalogue: (status) => `Failed to load catalogue (${status})`,
+    ontologyNotFoundInCatalogue: (id) => `Ontology "${id}" not found in catalogue`,
+    failedFetchOntology: (status) => `Failed to fetch ontology (${status})`,
+    stats: (entities, relationships) => `${entities} entities · ${relationships} relationships`,
+    tabGraph: 'Graph',
+    tabRdfSource: 'RDF Source',
+    copied: 'Copied!',
+    copyRdf: 'Copy RDF',
+  };
+}
+
 const THEMES: Record<string, ThemeTokens> = {
   dark: {
     bg: '#1B1B1B', bgSecondary: '#2D2D2D', bgTertiary: '#3D3D3D',
@@ -73,6 +119,7 @@ export function EmbedWidget({ config }: { config: EmbedConfig }) {
   const [copied, setCopied] = useState(false);
 
   const theme = THEMES[config.theme] || THEMES.dark;
+  const text = useMemo(() => getEmbedText(), []);
 
   // ─ Load ontology ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -93,25 +140,25 @@ export function EmbedWidget({ config }: { config: EmbedConfig }) {
             || window.location.origin + '/';
           const catalogueUrl = base.endsWith('/') ? `${base}catalogue.json` : `${base}/catalogue.json`;
           const res = await fetch(catalogueUrl);
-          if (!res.ok) throw new Error(`Failed to load catalogue (${res.status})`);
+          if (!res.ok) throw new Error(text.failedLoadCatalogue(res.status));
           const cat = (await res.json()) as Catalogue;
           const entry = cat.entries.find((e) => e.id === config.catalogueId);
-          if (!entry) throw new Error(`Ontology "${config.catalogueId}" not found in catalogue`);
+          if (!entry) throw new Error(text.ontologyNotFoundInCatalogue(config.catalogueId));
           ont = entry.ontology;
         } else if (config.ontologyUrl) {
           // Fetch from URL
           const res = await fetch(config.ontologyUrl);
-          if (!res.ok) throw new Error(`Failed to fetch ontology (${res.status})`);
-          const text = await res.text();
+          if (!res.ok) throw new Error(text.failedFetchOntology(res.status));
+          const ontologyText = await res.text();
           // Detect format: RDF/XML starts with < or has xml prologue
-          if (text.trimStart().startsWith('<')) {
-            const result = parseRDF(text);
+          if (ontologyText.trimStart().startsWith('<')) {
+            const result = parseRDF(ontologyText);
             ont = result.ontology;
           } else {
-            ont = JSON.parse(text) as Ontology;
+            ont = JSON.parse(ontologyText) as Ontology;
           }
         } else {
-          throw new Error('No ontology source specified. Use data-catalogue-id, data-ontology-url, or data-ontology-inline.');
+          throw new Error(text.noSource);
         }
 
         if (!cancelled) {
@@ -128,7 +175,7 @@ export function EmbedWidget({ config }: { config: EmbedConfig }) {
 
     load();
     return () => { cancelled = true; };
-  }, [config.catalogueId, config.ontologyUrl, config.ontologyInline, config.catalogueBaseUrl]);
+  }, [config.catalogueId, config.ontologyUrl, config.ontologyInline, config.catalogueBaseUrl, text]);
 
   // ─ Render ───────────────────────────────────────────────────────────────
   const containerStyle: React.CSSProperties = {
@@ -148,7 +195,7 @@ export function EmbedWidget({ config }: { config: EmbedConfig }) {
     return (
       <div style={containerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: theme.textSecondary, fontSize: 14 }}>
-          Loading ontology…
+          {text.loading}
         </div>
       </div>
     );
@@ -158,7 +205,7 @@ export function EmbedWidget({ config }: { config: EmbedConfig }) {
     return (
       <div style={containerStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: '#E81123', fontSize: 13, padding: 20, textAlign: 'center' }}>
-          {error || 'Unknown error'}
+          {error || text.unknownError}
         </div>
       </div>
     );
@@ -173,6 +220,7 @@ export function EmbedWidget({ config }: { config: EmbedConfig }) {
         setTab={setTab}
         theme={theme}
         copied={copied}
+        text={text}
         onCopyRdf={() => {
           navigator.clipboard.writeText(serializeToRDF(ontology, [])).then(() => {
             setCopied(true);
@@ -206,10 +254,11 @@ interface EmbedHeaderProps {
   setTab: (t: Tab) => void;
   theme: ThemeTokens;
   copied: boolean;
+  text: EmbedText;
   onCopyRdf: () => void;
 }
 
-function EmbedHeader({ ontology, tab, setTab, theme, copied, onCopyRdf }: EmbedHeaderProps) {
+function EmbedHeader({ ontology, tab, setTab, theme, copied, text, onCopyRdf }: EmbedHeaderProps) {
   const tabStyle = (active: boolean): React.CSSProperties => ({
     padding: '6px 14px',
     fontSize: 12,
@@ -230,12 +279,12 @@ function EmbedHeader({ ontology, tab, setTab, theme, copied, onCopyRdf }: EmbedH
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontWeight: 600, fontSize: 14 }}>{ontology.name}</span>
         <span style={{ fontSize: 11, color: theme.textTertiary }}>
-          {ontology.entityTypes.length} entities · {ontology.relationships.length} relationships
+          {text.stats(ontology.entityTypes.length, ontology.relationships.length)}
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <button style={tabStyle(tab === 'graph')} onClick={() => setTab('graph')}>Graph</button>
-        <button style={tabStyle(tab === 'rdf')} onClick={() => setTab('rdf')}>RDF Source</button>
+        <button style={tabStyle(tab === 'graph')} onClick={() => setTab('graph')}>{text.tabGraph}</button>
+        <button style={tabStyle(tab === 'rdf')} onClick={() => setTab('rdf')}>{text.tabRdfSource}</button>
         {tab === 'rdf' && (
           <button
             onClick={onCopyRdf}
@@ -245,7 +294,7 @@ function EmbedHeader({ ontology, tab, setTab, theme, copied, onCopyRdf }: EmbedH
               border: `1px solid ${theme.border}`, borderRadius: 4, cursor: 'pointer',
             }}
           >
-            {copied ? 'Copied!' : 'Copy RDF'}
+            {copied ? text.copied : text.copyRdf}
           </button>
         )}
       </div>

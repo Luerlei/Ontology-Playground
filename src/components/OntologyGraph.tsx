@@ -1,18 +1,25 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import type { Core, EventObject, LayoutOptions } from 'cytoscape';
 import { useAppStore } from '../store/appStore';
 import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Download, Crosshair } from 'lucide-react';
+import { useI18n } from '../i18n';
 
 // Register fcose layout
 cytoscape.use(fcose);
 
-export function OntologyGraph() {
+interface OntologyGraphProps {
+  topActions?: ReactNode;
+}
+
+export function OntologyGraph({ topActions }: OntologyGraphProps) {
   const cyRef = useRef<Core | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
+  const [zoomPercent, setZoomPercent] = useState(100);
   const focusNodeIdRef = useRef<string | null>(null);
   
   // Helper to safely get cytoscape instance - returns null if destroyed
@@ -41,6 +48,7 @@ export function OntologyGraph() {
     advanceQuestStep,
     darkMode
   } = useAppStore();
+  const { t } = useI18n();
 
   // Use refs for quest state to avoid re-creating the graph when quest changes
   const activeQuestRef = useRef(activeQuest);
@@ -111,29 +119,27 @@ export function OntologyGraph() {
             'label': 'data(label)',
             'text-valign': 'bottom',
             'text-halign': 'center',
-            'font-size': '14px',
+            'font-size': '13px',
             'font-family': 'Segoe UI, sans-serif',
             'font-weight': 600,
             'color': initialThemeColors.current.nodeText,
-            'text-margin-y': 10,
-            'width': 70,
-            'height': 70,
+            'text-margin-y': 8,
+            'width': 60,
+            'height': 60,
             'background-color': 'data(color)',
-            'border-width': 3,
+            'border-width': 2,
             'border-color': 'data(color)',
             'border-opacity': 0.5,
-            'transition-property': 'border-width, border-color, width, height',
-            'transition-duration': 200
+            'transition-property': 'border-width, border-color',
+            'transition-duration': 200,
           }
         },
         // Selected node
         {
           selector: 'node:selected',
           style: {
-            'border-width': 5,
+            'border-width': 4,
             'border-color': '#0078D4',
-            'width': 85,
-            'height': 85
           }
         },
         // Highlighted node
@@ -142,8 +148,6 @@ export function OntologyGraph() {
           style: {
             'border-width': 4,
             'border-color': '#FFB900',
-            'width': 80,
-            'height': 80
           }
         },
         // Dimmed node
@@ -162,7 +166,7 @@ export function OntologyGraph() {
             'font-family': 'Segoe UI, sans-serif',
             'color': initialThemeColors.current.edgeText,
             'text-rotation': 'autorotate',
-            'text-margin-y': -10,
+            'text-margin-y': -8,
             'text-wrap': 'ellipsis',
             'text-max-width': '120px',
             'text-background-color': initialThemeColors.current.nodeText === '#B3B3B3' ? '#1a1a2e' : '#f5f5f5',
@@ -173,11 +177,9 @@ export function OntologyGraph() {
             'line-color': initialThemeColors.current.edgeColor,
             'target-arrow-color': initialThemeColors.current.edgeColor,
             'target-arrow-shape': 'triangle',
-            'curve-style': 'unbundled-bezier',
-            'control-point-step-size': 40,
-            'edge-distances': 'node-position',
+            'curve-style': 'bezier',
             'transition-property': 'width, line-color, target-arrow-color',
-            'transition-duration': 200
+            'transition-duration': 200,
           }
         },
         // Selected edge
@@ -211,23 +213,17 @@ export function OntologyGraph() {
        
       layout: {
         name: 'fcose',
-        quality: 'proof',
         randomize: false,
         animate: false,
         fit: true,
-        padding: 60,
+        padding: 40,
         nodeDimensionsIncludeLabels: true,
+        quality: 'proof',
         nodeRepulsion: () => 15000,
         idealEdgeLength: () => 200,
         edgeElasticity: () => 0.45,
-        nestingFactor: 0.1,
-        gravity: 0.25,
-        gravityRange: 3.8,
-        numIter: 2500,
-        tile: true,
-        tilingPaddingVertical: 40,
-        tilingPaddingHorizontal: 40,
-        nodeSeparation: 100
+        nodeSeparation: 100,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as LayoutOptions,
       minZoom: 0.3,
       maxZoom: 3
@@ -299,22 +295,35 @@ export function OntologyGraph() {
 
     cyRef.current = cy;
     mountedRef.current = true;
+    setZoomPercent(Math.round(cy.zoom() * 100));
 
-    // Run layout explicitly after initialization for better results
-     
+    cy.on('zoom', () => {
+      setZoomPercent(Math.round(cy.zoom() * 100));
+    });
+
+    // Run an explicit layout pass to avoid compact diagonal stacking
     cy.layout({
       name: 'fcose',
       quality: 'proof',
       randomize: true,
       animate: false,
       fit: true,
-      padding: 60,
+      padding: 40,
       nodeDimensionsIncludeLabels: true,
       nodeRepulsion: () => 15000,
       idealEdgeLength: () => 200,
       edgeElasticity: () => 0.45,
-      nodeSeparation: 100
+      nodeSeparation: 100,
     } as unknown as Parameters<Core['layout']>[0]).run();
+
+    requestAnimationFrame(() => {
+      try {
+        cy.fit(undefined, 40);
+        cy.center();
+      } catch {
+        // ignore fit errors during mount transitions
+      }
+    });
 
     return () => {
       mountedRef.current = false;
@@ -322,6 +331,22 @@ export function OntologyGraph() {
       cyRef.current = null;
     };
   }, [buildElements, selectEntity, selectRelationship]);
+
+  // Keep graph readable on viewport changes
+  useEffect(() => {
+    const handleResize = () => {
+      const cy = getCy();
+      if (!cy) return;
+      try {
+        cy.resize();
+        cy.fit(undefined, 40);
+      } catch {
+        // ignore transient resize errors
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [getCy]);
 
   // Keep focusNodeIdRef in sync with state
   useEffect(() => {
@@ -512,7 +537,7 @@ export function OntologyGraph() {
       {focusNodeId && (
         <div className="graph-focus-badge">
           <Crosshair size={13} />
-          <span>Focus mode</span>
+          <span>{t('graph.focus_mode')}</span>
           <button
             className="graph-focus-exit"
             onClick={() => {
@@ -521,31 +546,57 @@ export function OntologyGraph() {
               if (cy) cy.elements().removeClass('dimmed');
             }}
           >
-            Click background or ✕ to exit
+            {t('graph.focus_exit')}
           </button>
         </div>
       )}
       
       <div className="graph-controls">
-        <button className="graph-control-btn" onClick={handleZoomIn} title="Zoom In">
+        <button className="graph-control-btn" onClick={handleZoomIn} title={t('graph.zoom_in')}>
           <ZoomIn size={18} />
         </button>
-        <button className="graph-control-btn" onClick={handleZoomOut} title="Zoom Out">
+        <button className="graph-control-btn" onClick={handleZoomOut} title={t('graph.zoom_out')}>
           <ZoomOut size={18} />
         </button>
-        <button className="graph-control-btn" onClick={handleFit} title="Fit to View">
+        <button className="graph-control-btn" onClick={handleFit} title={t('graph.fit_view')}>
           <Maximize2 size={18} />
         </button>
-        <button className="graph-control-btn" onClick={handleReset} title="Reset Layout">
+        <button className="graph-control-btn" onClick={handleReset} title={t('graph.reset_layout')}>
           <RotateCcw size={18} />
         </button>
-        <button className="graph-control-btn" onClick={handleDownload} title="Download Graph as PNG">
+        <button className="graph-control-btn" onClick={handleDownload} title={t('graph.download_png')}>
           <Download size={18} />
         </button>
+        {topActions}
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          left: 12,
+          top: 12,
+          zIndex: 5,
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          padding: '6px 10px',
+          borderRadius: 10,
+          background: darkMode ? 'rgba(18,18,28,0.8)' : 'rgba(255,255,255,0.8)',
+          backdropFilter: 'blur(6px)',
+          border: `1px solid ${darkMode ? '#2a2a36' : '#d8d8e0'}`,
+          fontSize: 12,
+          color: 'var(--text-secondary)',
+        }}
+      >
+        <span>{currentOntology.entityTypes.length} nodes</span>
+        <span>•</span>
+        <span>{currentOntology.relationships.length} edges</span>
+        <span>•</span>
+        <span>{zoomPercent}%</span>
       </div>
 
       <div className="graph-legend">
-        <div className="legend-title">Entity Types</div>
+        <div className="legend-title">{t('graph.legend_entity_types')}</div>
         {currentOntology.entityTypes.map(entity => (
           <div key={entity.id} className="legend-item">
             <div className="legend-dot" style={{ backgroundColor: entity.color }} />

@@ -104,7 +104,7 @@ export function PathFinderPanel() {
                 value={fromId}
                 onChange={e => { setFromId(e.target.value); setSearched(false); clearHighlights(); }}
               >
-                <option value="">Select entity…</option>
+                <option value="">{t('pathfinder.select_entity')}</option>
                 {entities.map(e => (
                   <option key={e.id} value={e.id}>{e.icon} {e.name}</option>
                 ))}
@@ -120,7 +120,7 @@ export function PathFinderPanel() {
                 value={toId}
                 onChange={e => { setToId(e.target.value); setSearched(false); clearHighlights(); }}
               >
-                <option value="">Select entity…</option>
+                <option value="">{t('pathfinder.select_entity')}</option>
                 {entities.map(e => (
                   <option key={e.id} value={e.id}>{e.icon} {e.name}</option>
                 ))}
@@ -147,7 +147,7 @@ export function PathFinderPanel() {
 
           {sameEntity && (
             <div className="pathfinder-message pathfinder-message--warn">
-              Select two different entities.
+              {t('pathfinder.select_different')}
             </div>
           )}
 
@@ -160,7 +160,7 @@ export function PathFinderPanel() {
           {displaySteps.length > 0 && (
             <div className="pathfinder-result">
               <div className="pathfinder-result-label">
-                {t('pathfinder.path_found')} — {displaySteps.length - 1} hop{displaySteps.length - 1 !== 1 ? 's' : ''}
+                {t('pathfinder.path_found_hops', { hops: displaySteps.length - 1 })}
               </div>
               <div className="pathfinder-chain">
                 {displaySteps.map((step, i) => (

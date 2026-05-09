@@ -22,7 +22,7 @@ export function HelpModal({ onClose }: HelpModalProps) {
         animate={{ scale: 1, y: 0 }}
         transition={{ type: 'spring', damping: 20 }}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 700 }}
+        style={{ maxWidth: 700, maxHeight: '85vh', overflow: 'auto' }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ fontSize: 24, fontWeight: 600 }}>{t('help.title')}</h2>

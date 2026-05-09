@@ -113,6 +113,9 @@ export function serializeToRDF(
       if (prop.isIdentifier) {
         rdf += '        <ont:isIdentifier rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ont:isIdentifier>\n';
       }
+      if (prop.isRequired) {
+        rdf += '        <ont:isRequired rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ont:isRequired>\n';
+      }
       if (prop.unit) {
         rdf += `        <ont:unit>${escapeXml(prop.unit)}</ont:unit>\n`;
       }

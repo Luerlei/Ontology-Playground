@@ -134,9 +134,9 @@ export function CommandPalette({ open, onClose, commands }: CommandPaletteProps)
           ))}
         </div>
         <div className="command-palette-footer">
-          <span><Command size={12} /> <span>K</span> to open</span>
-          <span>↑↓ navigate</span>
-          <span>↵ select</span>
+          <span><Command size={12} /> <span>K</span> {t('command.palette.open_hint')}</span>
+          <span>{t('command.palette.navigate_hint')}</span>
+          <span>{t('command.palette.select_hint')}</span>
         </div>
       </motion.div>
     </motion.div>

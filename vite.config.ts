@@ -44,14 +44,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path: string) => path.replace('/__github', ''),
       },
-      ...(process.env.VITE_ENABLE_AI_BUILDER === 'true'
-        ? {
-            '/api': {
-              target: 'http://localhost:7071',
-              changeOrigin: true,
-            },
-          }
-        : {}),
+      '/api': {
+        target: 'http://localhost:7071',
+        changeOrigin: true,
+      },
     },
   },
 })
