@@ -13,6 +13,7 @@ export interface DesignerMetadata {
   category: string;
   tags: string[];
   author: string;
+  notes: string;
   relationshipNameDictionary: string[];
 }
 
@@ -22,6 +23,7 @@ function defaultDesignerMetadata(): DesignerMetadata {
     category: 'general',
     tags: [],
     author: '',
+    notes: '',
     relationshipNameDictionary: ['relates_to', 'belongs_to', 'contains', 'references'],
   };
 }
@@ -47,7 +49,7 @@ export function isValidFabricIQName(name: string): boolean {
 export function fabricIQNameError(kind: string, name: string): string | null {
   if (!name) return null; // empty names are caught separately
   if (name.length > 26) return `${kind} name "${name}" exceeds 26 characters.`;
-  if (!/^\p{L}|\p{N}/u.test(name)) return `${kind} name "${name}" must start with a letter, digit, or CJK character.`;
+  if (!/^[\p{L}\p{N}]/u.test(name)) return `${kind} name "${name}" must start with a letter, digit, or CJK character.`;
   if (!/[\p{L}\p{N}]$/u.test(name)) return `${kind} name "${name}" must end with a letter, digit, or CJK character.`;
   if (!FABRIC_IQ_NAME_RE.test(name)) return `${kind} name "${name}" may only contain letters, digits, hyphens, and underscores.`;
   return null;

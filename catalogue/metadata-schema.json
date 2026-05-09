@@ -33,6 +33,10 @@
     "author": {
       "type": "string",
       "description": "Author name or GitHub username"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes or remarks for the model"
     }
   },
   "additionalProperties": false

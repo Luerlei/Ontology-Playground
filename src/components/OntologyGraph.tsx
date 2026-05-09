@@ -4,7 +4,7 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import type { Core, EventObject, LayoutOptions } from 'cytoscape';
 import { useAppStore } from '../store/appStore';
-import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Download, Crosshair } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw, Download, Crosshair, ChevronDown, ChevronLeft } from 'lucide-react';
 import { useI18n } from '../i18n';
 
 // Register fcose layout
@@ -20,6 +20,7 @@ export function OntologyGraph({ topActions }: OntologyGraphProps) {
   const mountedRef = useRef(true);
   const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
   const [zoomPercent, setZoomPercent] = useState(100);
+  const [legendCollapsed, setLegendCollapsed] = useState(true);
   const focusNodeIdRef = useRef<string | null>(null);
   
   // Helper to safely get cytoscape instance - returns null if destroyed
@@ -595,9 +596,18 @@ export function OntologyGraph({ topActions }: OntologyGraphProps) {
         <span>{zoomPercent}%</span>
       </div>
 
-      <div className="graph-legend">
-        <div className="legend-title">{t('graph.legend_entity_types')}</div>
-        {currentOntology.entityTypes.map(entity => (
+      <div className={`graph-legend ${legendCollapsed ? 'collapsed' : ''}`}>
+        <button
+          type="button"
+          className="graph-legend-toggle"
+          onClick={() => setLegendCollapsed((value) => !value)}
+          aria-expanded={!legendCollapsed}
+          title={t('graph.legend_entity_types')}
+        >
+          <span className="legend-title">{t('graph.legend_entity_types')}</span>
+          {legendCollapsed ? <ChevronLeft size={16} /> : <ChevronDown size={16} />}
+        </button>
+        {!legendCollapsed && currentOntology.entityTypes.map(entity => (
           <div key={entity.id} className="legend-item">
             <div className="legend-dot" style={{ backgroundColor: entity.color }} />
             <span>{entity.icon} {entity.name}</span>

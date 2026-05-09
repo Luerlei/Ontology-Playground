@@ -1,0 +1,137 @@
+{
+  "ontology": {
+    "name": "My Ontology",
+    "description": "",
+    "entityTypes": [
+      {
+        "id": "new-entity-4",
+        "name": "客户",
+        "description": "",
+        "icon": "📋",
+        "color": "#5C2D91",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "isIdentifier": true
+          }
+        ]
+      },
+      {
+        "id": "new-entity-3",
+        "name": "供应商",
+        "description": "",
+        "icon": "🏢",
+        "color": "#D83B01",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "isIdentifier": true
+          }
+        ]
+      },
+      {
+        "id": "new-entity-2",
+        "name": "采购",
+        "description": "",
+        "icon": "👤",
+        "color": "#107C10",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "isIdentifier": true
+          }
+        ]
+      },
+      {
+        "id": "new-entity-1",
+        "name": "合同",
+        "description": "",
+        "icon": "📦",
+        "color": "#0078D4",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "isIdentifier": true
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "rel-relates-to-4",
+        "name": "relates_to",
+        "from": "new-entity-2",
+        "to": "new-entity-1",
+        "cardinality": "one-to-many",
+        "description": ""
+      },
+      {
+        "id": "rel-relates-to-3",
+        "name": "relates_to",
+        "from": "new-entity-4",
+        "to": "new-entity-1",
+        "cardinality": "one-to-many",
+        "description": ""
+      },
+      {
+        "id": "rel-relates-to-2",
+        "name": "relates_to",
+        "from": "new-entity-2",
+        "to": "new-entity-4",
+        "cardinality": "one-to-many",
+        "description": ""
+      },
+      {
+        "id": "rel-relates-to-1",
+        "name": "relates_to",
+        "from": "new-entity-2",
+        "to": "new-entity-3",
+        "cardinality": "one-to-many",
+        "description": ""
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "entityTypeId": "customer",
+      "source": "OneLake",
+      "table": "lakehouse.bronze.customers",
+      "columnMappings": {
+        "customerId": "customer_id",
+        "name": "full_name",
+        "email": "email_address",
+        "loyaltyTier": "loyalty_status",
+        "joinDate": "registration_date",
+        "totalSpend": "lifetime_value"
+      }
+    },
+    {
+      "entityTypeId": "order",
+      "source": "OneLake",
+      "table": "lakehouse.silver.orders",
+      "columnMappings": {
+        "orderId": "order_id",
+        "timestamp": "order_timestamp",
+        "total": "order_total",
+        "status": "order_status",
+        "paymentMethod": "payment_type"
+      }
+    },
+    {
+      "entityTypeId": "product",
+      "source": "PowerBI",
+      "table": "semantic_model.Products",
+      "columnMappings": {
+        "productId": "ProductKey",
+        "name": "ProductName",
+        "category": "ProductCategory",
+        "price": "UnitPrice",
+        "origin": "OriginCountry"
+      }
+    }
+  ]
+}

@@ -22,6 +22,7 @@ const catalogueUpdate: AzureFunction = async function (_context: Context, req: H
         category?: string;
         tags?: string[];
         author?: string;
+        notes?: string;
       };
     };
 

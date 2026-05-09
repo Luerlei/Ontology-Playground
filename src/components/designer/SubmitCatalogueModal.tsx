@@ -48,6 +48,7 @@ export function SubmitCatalogueModal({ onClose }: SubmitCatalogueModalProps) {
       category: metadata.category || 'general',
       tags: metadata.tags ?? [],
       author: metadata.author || '',
+      notes: metadata.notes || '',
       relationshipNameDictionary: metadata.relationshipNameDictionary ?? [],
     };
     const blob = new Blob([JSON.stringify(metadataPayload, null, 2) + '\n'], { type: 'application/json' });
@@ -69,6 +70,7 @@ export function SubmitCatalogueModal({ onClose }: SubmitCatalogueModalProps) {
       category: metadata.category || 'general',
       tags: metadata.tags ?? [],
       author: metadata.author || '',
+      notes: metadata.notes || '',
       relationshipNameDictionary: metadata.relationshipNameDictionary ?? [],
     };
 

@@ -45,6 +45,7 @@ export interface CatalogueUpdateRequest {
     category?: string;
     tags?: string[];
     author?: string;
+    notes?: string;
   };
 }
 

@@ -185,6 +185,13 @@ export function ModelCataloguePanel({ onCreateModel }: ModelCataloguePanelProps)
                             <div className="model-card-no-tags">{t('left.model.no_tags')}</div>
                           )}
 
+                          {entry.notes?.trim() && (
+                            <div className="model-card-notes" title={entry.notes}>
+                              <span className="model-card-notes-label">{t('left.model.notes')}:</span>
+                              <span className="model-card-notes-text">{entry.notes}</span>
+                            </div>
+                          )}
+
                           <div className="model-card-meta">
                             <span><Layers size={12} /> {entry.ontology.entityTypes.length}</span>
                             <span>↔ {entry.ontology.relationships.length}</span>

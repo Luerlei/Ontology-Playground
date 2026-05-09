@@ -4,6 +4,7 @@ export interface CatalogueEntry {
   id: string;
   name: string;
   description: string;
+  notes?: string;
   icon?: string;
   category: string;
   tags: string[];

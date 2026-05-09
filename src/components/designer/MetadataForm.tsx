@@ -93,6 +93,16 @@ export function MetadataForm() {
           </label>
 
           <label className="designer-field">
+            <span>{t('designer.metadata.notes')}</span>
+            <textarea
+              rows={3}
+              value={metadata.notes}
+              onChange={(e) => updateMetadata({ notes: e.target.value })}
+              placeholder={t('designer.metadata.notes_placeholder')}
+            />
+          </label>
+
+          <label className="designer-field">
             <span>{t('designer.metadata.relationship_dictionary')}</span>
             <input
               type="text"

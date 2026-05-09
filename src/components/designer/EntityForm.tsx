@@ -41,7 +41,6 @@ export function EntityForm() {
     addEntity,
     updateEntity,
     removeEntity,
-    selectEntity,
     addProperty,
     updateProperty,
     removeProperty,

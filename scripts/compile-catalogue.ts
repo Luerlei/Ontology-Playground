@@ -30,6 +30,7 @@ const OUTPUT_PATH = join(ROOT, 'public', 'catalogue.json');
 interface CatalogueMetadata {
   name: string;
   description: string;
+  notes?: string;
   icon?: string;
   category: string;
   tags?: string[];
@@ -239,6 +240,7 @@ function compile(): Catalogue {
         id: entryId,
         name: metadata.name,
         description: metadata.description,
+        notes: metadata.notes,
         icon: metadata.icon,
         category: metadata.category,
         tags: metadata.tags ?? [],

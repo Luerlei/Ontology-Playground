@@ -1,0 +1,17 @@
+{
+  "name": "My Ontology",
+  "description": "Procurement and supplier workflow ontology with contracts and customers",
+  "icon": "📦",
+  "category": "general",
+  "tags": [
+    "aa"
+  ],
+  "author": "sono",
+  "notes": "采购、供应商、合同与客户的示例流程模型，用于供应链场景演示。",
+  "relationshipNameDictionary": [
+    "relates_to",
+    "belongs_to",
+    "contains",
+    "references"
+  ]
+}

@@ -73,6 +73,7 @@ export function DesignerToolbar({ catalogueId }: DesignerToolbarProps) {
           category: metadata.category || 'general',
           tags: metadata.tags ?? [],
           author: metadata.author || '',
+          notes: metadata.notes || '',
         },
       });
       setSaveRemoteStatus('success');
@@ -94,6 +95,7 @@ export function DesignerToolbar({ catalogueId }: DesignerToolbarProps) {
       category: metadata.category || 'general',
       tags: metadata.tags ?? [],
       author: metadata.author || '',
+      notes: metadata.notes || '',
       relationshipNameDictionary: metadata.relationshipNameDictionary ?? [],
     };
 
@@ -208,6 +210,7 @@ export function DesignerToolbar({ catalogueId }: DesignerToolbarProps) {
             category: typeof metadataInZip.category === 'string' ? metadataInZip.category : undefined,
             tags: Array.isArray(metadataInZip.tags) ? metadataInZip.tags.filter((v): v is string => typeof v === 'string') : undefined,
             author: typeof metadataInZip.author === 'string' ? metadataInZip.author : undefined,
+            notes: typeof metadataInZip.notes === 'string' ? metadataInZip.notes : undefined,
             relationshipNameDictionary: Array.isArray(metadataInZip.relationshipNameDictionary)
               ? metadataInZip.relationshipNameDictionary.filter((v): v is string => typeof v === 'string')
               : undefined,

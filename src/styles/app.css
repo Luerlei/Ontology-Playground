@@ -578,32 +578,54 @@ body {
 
 .model-card-tags {
   display: flex;
-  gap: 4px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   margin-bottom: 8px;
-  white-space: nowrap;
+  white-space: normal;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary);
 }
 
 .model-card-tag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  line-height: 1.2;
-  padding: 2px 8px;
-  background: color-mix(in srgb, var(--ms-blue) 10%, var(--bg-secondary));
-  border: 1px solid color-mix(in srgb, var(--ms-blue) 30%, var(--border-color));
-  border-radius: 999px;
+  display: inline;
   color: var(--text-secondary);
-  max-width: 100%;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.model-card-tag:not(:last-child)::after {
+  content: ' /';
+  color: var(--text-tertiary);
 }
 
 .model-card-no-tags {
   font-size: 11px;
   color: var(--text-tertiary);
   margin-bottom: 10px;
+}
+
+.model-card-notes {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.model-card-notes-label {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.model-card-notes-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .model-card-meta {
@@ -1032,36 +1054,74 @@ body {
 
 .graph-legend {
   position: absolute;
-  bottom: 24px;
+  top: 24px;
   right: 24px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 16px;
+  background: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 10px 12px;
   min-width: 180px;
+  max-width: min(280px, calc(100% - 48px));
+  z-index: 5;
+  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.graph-legend.collapsed {
+  min-width: auto;
+  max-width: none;
+  padding: 8px 10px;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.graph-legend-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.graph-legend-toggle:hover {
+  color: var(--text-primary);
+}
+
+.graph-legend.collapsed .graph-legend-toggle {
+  gap: 8px;
 }
 
 .legend-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+  margin-bottom: 0;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 0;
-  font-size: 13px;
+  padding: 8px 0 0;
+  font-size: 12px;
   color: var(--text-primary);
 }
 
 .legend-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 10%, transparent);
 }
 
 /* Right Sidebar Container */

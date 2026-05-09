@@ -419,7 +419,13 @@ function JsonFoldTree({
   const isCollapsible = (v: JsonValue): v is JsonValue[] | { [key: string]: JsonValue } =>
     typeof v === 'object' && v !== null;
 
-  const renderNode = (v: JsonValue, path: string, depth: number, keyName?: string, isLast = true): JSX.Element => {
+  const renderNode = (
+    v: JsonValue,
+    path: string,
+    depth: number,
+    keyName?: string,
+    isLast = true,
+  ): import('react').ReactElement => {
     const indent = { paddingLeft: `${depth * 16}px` };
     const comma = isLast ? '' : ',';
 

@@ -26,6 +26,7 @@ export interface SaveCatalogueRequest {
     category?: string;
     tags?: string[];
     author?: string;
+    notes?: string;
   };
 }
 
@@ -101,6 +102,8 @@ function readCatalogueFile(): CataloguePayload {
   }
   return JSON.parse(readFileSync(outputFile, 'utf-8')) as CataloguePayload;
 }
+
+export async function ensureCatalogueFresh(): Promise<CataloguePayload> {
 
   const now = Date.now();
   const outputFile = getPublicCatalogueFile();
@@ -183,6 +186,7 @@ export async function saveCatalogueEntry(req: SaveCatalogueRequest): Promise<voi
       ? req.metadata?.tags
       : (Array.isArray(existingMetadata.tags) ? existingMetadata.tags : []),
     author: req.metadata?.author || String(existingMetadata.author || ''),
+    notes: req.metadata?.notes || String(existingMetadata.notes || ''),
   };
 
   writeFileSync(metadataFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf-8');
